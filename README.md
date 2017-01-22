@@ -16,7 +16,7 @@ and configure your PATH variable.
 ### Linux
 
 ## Building and downloading
-Clone the repo, build the sources with _make_, and download _hex_ file
-board with following command.
+Clone the repo, build the sources with _make_, and push _hex_ file
+to board with following command.
 
        $ avrdude -c usbasp -p m328p -u -U flash:w:beer_tc.hex
