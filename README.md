@@ -9,7 +9,7 @@ Install following tools
 
 * [avr toolchain](http://www.atmel.com/tools/atmelavrtoolchainforwindows.aspx)
 * [gnu make](http://fab.cba.mit.edu/classes/4.140/doc/projects/ftsmin/make-3.81.exe)
-* [avrdude]()
+* [avrdude](http://fab.cba.mit.edu/classes/4.140/doc/projects/ftsmin/avrdude-win-64bit.zip)
 
 and configure your PATH variable.
 
