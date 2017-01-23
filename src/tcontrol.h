@@ -8,7 +8,7 @@ typedef struct temp_controller {
 } temp_controller;
 
 // init control loop, requires Tc in ms
-void init_cl (uint16_t tc);
+void init_cl (uint32_t tc);
 void start_cl ();
 void stop_cl ();
 uint16_t read_temp ();
