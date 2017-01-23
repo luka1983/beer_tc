@@ -7,7 +7,7 @@ typedef struct temp_controller {
 	uint16_t temp_set;
 } temp_controller;
 
-// init control loop, requires Tc in ms
+// init control loop, requires tc in ms
 void init_cl (uint32_t tc);
 void start_cl ();
 void stop_cl ();

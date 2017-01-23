@@ -5,7 +5,7 @@
 
 int main (void) {
 	sei();			// Enable interrupts
-	init_cl(500);
+	init_cl(1000);
 	start_cl();
 
 	for(;;) {}
