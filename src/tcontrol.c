@@ -1,8 +1,9 @@
 #include "tcontrol.h"
+#include "serial.h"
 
 static temp_controller controller = { .temp = 0, .temp_set = 0 };
 
-void init_cl (uint32_t tc) {
+void init_control_loop(uint32_t tc) {
 	DDRB |= 0x20;
 	TCCR1B |= (1 << WGM12);					// CTC mode on OCR1A match
 	TIMSK1 |= (1 << OCIE1A);				// Trigger int on compare match
@@ -15,24 +16,25 @@ void init_cl (uint32_t tc) {
 	return;
 }
 
-void start_cl () {
+void start_control_loop() {
 	TCCR1B |= (1 << CS10) | (1 << CS12);	// Set prescaler (starts timer)
 	return;
 }
 
-void stop_cl () {
+void stop_control_loop() {
 	TCCR1B &= ~((1 << CS10) | (1 << CS12));
 	return;
 }
 
-uint16_t read_temp () {
+uint16_t read_temp() {
 	return controller.temp;
 }
 
-uint16_t read_temp_set () {
+uint16_t read_temp_set() {
 	return controller.temp_set;
 }
 
 ISR (TIMER1_COMPA_vect) {
 	PORTB ^= 0x20;
+	sprints("Hello from another world!");
 }

@@ -1,4 +1,3 @@
-#include <stdint.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
@@ -8,8 +7,8 @@ typedef struct temp_controller {
 } temp_controller;
 
 // init control loop, requires tc in ms
-void init_cl (uint32_t tc);
-void start_cl ();
-void stop_cl ();
-uint16_t read_temp ();
-uint16_t read_temp_set ();
+void init_control_loop(uint32_t tc);
+void start_control_loop();
+void stop_control_loop();
+uint16_t read_temp();
+uint16_t read_temp_set();
