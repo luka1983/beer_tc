@@ -20,7 +20,8 @@ void sputc(const char c) {
 
 void sprints(const char* str) {
 	uint8_t i;
-	for (i = 0; i < strlen(str); ++i) {
+	uint8_t len = strlen(str);
+	for (i = 0; i < len; ++i) {
 		sputc(*(str++));
 	}
 	crnl();
