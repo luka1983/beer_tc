@@ -34,7 +34,7 @@ uint16_t read_temp_set() {
 	return controller.temp_set;
 }
 
-ISR (TIMER1_COMPA_vect) {
+ISR(TIMER1_COMPA_vect) {
+	// temperature control code here
 	PORTB ^= 0x20;
-	sprints("Hello from another world!");
 }
