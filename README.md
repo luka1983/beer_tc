@@ -36,6 +36,19 @@ Install required packages:
 
 sudo apt-get install avr-libc avrdude binutils-avr gcc-avr srecord
 
+## Interfacing programmer
+
+### Buspirate 3.6
+
+| Buspirate   | Arduino Pro Mini |
+|-------------|------------------|
+|    GND      | GND              |
+| +5V or +3V3 | Vcc              |
+| CS          | RESET            |
+| MOSI        | MOSI (11)        |
+| MISO        | MISO (12)        |
+| SCLK,CLK    | SCK (13)         |
+
 ## Building and downloading
 Clone the repo, build the sources with _make_, and push _hex_ file
 to board with following command.
