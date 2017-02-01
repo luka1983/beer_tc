@@ -10,8 +10,14 @@ reading will be possible via i2c lcd screen.
 Although sharing similar system architecture to [brew pi](https://github.com/BrewPi/), this project is
 completely independent and created from scratch.
 
+## Board documentation
+
+Board documentation can be found here: https://www.arduino.cc/en/Main/arduinoBoardProMini
+
+Here is also direct link to pdf schematics: https://www.arduino.cc/en/uploads/Main/Arduino-Pro-Mini-schematic.pdf
+
 ## Installation
-These instruction assume that USBasp AVR programmer with avrdude is used for device programming.
+These instruction assume that either USBasp or buspirate AVR programmer with avrdude are used for device programming.
 
 ### Windows
 Install following tools
@@ -24,13 +30,21 @@ and configure your PATH variable.
 
 ### Linux
 
-Here will be given Linux instructions
+Here will be given Linux instructions.
+
+Install required packages:
+
+sudo apt-get install avr-libc avrdude binutils-avr gcc-avr srecord
 
 ## Building and downloading
 Clone the repo, build the sources with _make_, and push _hex_ file
 to board with following command.
 
+usbasp:
        $ avrdude -c usbasp -p m328p -u -U flash:w:beer_tc.hex
+
+buspirate:
+       $ sudo avrdude -c buspirate -P /dev/ttyUSB2 -p m328p -u -U flash:w:beer_tc.hex
 
 ## Command set
 When beer_tc is running on AVR board, the following commands can be issued via serial interface. all
