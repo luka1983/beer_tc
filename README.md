@@ -24,6 +24,8 @@ and configure your PATH variable.
 
 ### Linux
 
+Here will be given Linux instructions
+
 ## Building and downloading
 Clone the repo, build the sources with _make_, and push _hex_ file
 to board with following command.
