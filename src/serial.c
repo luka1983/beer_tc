@@ -1,4 +1,9 @@
+#include <string.h>
+#include <stdarg.h>
+#include <stdio.h>
 #include "serial.h"
+
+#define MAX_SLEN 64
 
 void init_serial(uint16_t brate, uint8_t dbits, uint8_t parity, uint8_t sbits) {
 	uint16_t ubrr0 = (uint16_t) (F_CPU / (brate * 16UL)) - 1;
@@ -19,9 +24,15 @@ void sputc(const char c) {
 	UDR0 = c;
 }
 
-void sprints(const char* str) {
-	while (*str != '\0')
-		sputc(*(str++));
+void sprints(const char* fmt, ...) {
+	char str[MAX_SLEN];
+	char* p = &str[0];
+	va_list args;
+	va_start(args, fmt);
+	vsprintf(str, fmt, args);
+	va_end(args);
+	while (*p != '\0')
+		sputc(*(p++));
 	crnl();
 }
 
