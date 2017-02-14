@@ -24,7 +24,7 @@ MQTT_HOST="52.28.77.176"
 MQTT_HOST_PORT=1883
 
 # Sensors read period, in seconds
-sensor_read_period = 30
+sensor_read_period = 300
 
 # Sensor list
 sensors = ['t1', 't2']
