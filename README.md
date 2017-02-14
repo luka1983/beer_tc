@@ -10,6 +10,14 @@ reading will be possible via i2c lcd screen.
 Although sharing similar system architecture to [brew pi](https://github.com/BrewPi/), this project is
 completely independent and created from scratch.
 
+Until all hardware elements are in place, Atmega will be controlled with raspberry pi via serial interface
+
+## Directory Structure
+
+* web_server - Contains sources for web server and services running on it
+* rpi - Contains sources of the raspberry pi
+* src - Contains sources for the AVR
+
 ## Board documentation
 
 Board documentation can be found here: https://www.arduino.cc/en/Main/arduinoBoardProMini
