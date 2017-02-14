@@ -25,6 +25,29 @@ Board documentation can be found here: https://www.arduino.cc/en/Main/arduinoBoa
 Here is also direct link to pdf schematics: https://www.arduino.cc/en/uploads/Main/Arduino-Pro-Mini-schematic.pdf
 
 ## Installation
+
+### Web Server
+
+Installing SW on web server goes down to:
+
+ - installing web page
+ - installing handler for messages
+
+To install web page, copy server_software/web_server contents into /var/www/html/beer to your favourite server.
+
+To install handler for messages, copy server_software/apps/beermon_handler.py to server and try to run it.
+
+It is possible you'll need some additional SW. To install necessary SW, execute (at least):
+
+sudo apt-get update
+sudo apt-get install python python3 mosquitto mosquitto-clients python-mosquitto python3-pip python-pip -y
+sudo pip3 install paho-mqtt
+sudo pip2 install paho-mqtt
+
+After this, make sure your firewall is configured to receive on 1883
+
+## AVR Toolchain
+
 These instruction assume that either USBasp or buspirate AVR programmer with avrdude are used for device programming.
 
 ### Windows
