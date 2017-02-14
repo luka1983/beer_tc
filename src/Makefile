@@ -2,7 +2,7 @@
 FCPU		= 16000000UL
 
 PRG			= beer_tc
-OBJS		= beer_tc.o tcontrol.o serial.o onewire.o ds18b20.o
+OBJS		= beer_tc.o tcontrol.o serial.o onewire.o ds18b20.o temperature.o
 
 MCU_TARGET	= atmega328p
 
@@ -37,6 +37,9 @@ onewire.o: onewire.c
 
 ds18b20.o: ds18b20.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -c ds18b20.c
+
+temperature.o: temperature.c
+	$(CC) $(CFLAGS) $(LDFLAGS) -c temperature.c
 
 clean:
 	rm -rf *.o $(PRG).elf $(PRG).hex *.bak 
