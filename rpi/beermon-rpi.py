@@ -20,7 +20,7 @@ import stat
 from collections import deque
 
 # Local mqtt broker address
-MQTT_HOST="localhost"
+MQTT_HOST="52.28.77.176"
 MQTT_HOST_PORT=1883
 
 # Sensors read period, in seconds
