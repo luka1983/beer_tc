@@ -9,12 +9,10 @@
 #ifdef DS18B20_DEMO
 #include <util/delay.h>
 #include <stdlib.h>
-#include "ds18b20.h"
+#include "temperature.h"
+#include "temperature_channel_config.h"
 
-void ds18b20_demo(volatile uint8_t *ds18b20_port,
-		  volatile uint8_t *ds18b20_direction,
-		  volatile uint8_t *ds18b20_portin,
-		  uint8_t pin_mask);
+void temperature_demo(void);
 #endif
 
 int main(void) {
@@ -25,7 +23,7 @@ int main(void) {
 
 	for(;;) {
 #ifdef DS18B20_DEMO
-		ds18b20_demo(&PORTD, &DDRD, &PIND, 1 << 6);
+		temperature_demo();
 #endif
 	}
 
@@ -33,43 +31,21 @@ int main(void) {
 }
 
 #ifdef DS18B20_DEMO
-/*
- * Demo function for reading temperature from DS18B20.
- * port, direction, portin, pinmask specify port and
- * pin to which sensor is connected
- * */
-void ds18b20_demo(volatile uint8_t *ds18b20_port,
-		  volatile uint8_t *ds18b20_direction,
-		  volatile uint8_t *ds18b20_portin,
-		  uint8_t pin_mask)
+
+void temperature_demo(void)
 {
 	int temp_int = 0, err = 0;
-	static unsigned int cntr = 0;
 	double temp_double = 0;
 	char string_temperature[32];
 
-	cntr++;
-	err = ds18b20convert(ds18b20_port, ds18b20_direction,
-			     ds18b20_portin, pin_mask, NULL);
+	err = temperature_read(&channel_1, &temp_int);
 	if (err != 0) {
-		sprints("Error (%d) while issuing CONVERT COMMAND", err);
+		sprints("Error (%d) while temperature_read", err);
 		return;
 	}
-
-	/* see ds18b20 ds, temp conversion in 12 bit resolution
-	 * can last up to 750 ms */
-	_delay_ms(1000);
-
-	err = ds18b20read(ds18b20_port, ds18b20_direction,
-			  ds18b20_portin, pin_mask, NULL, &temp_int);
-	if (err != 0) {
-		sprints("Error (%d) while issuing READ COMMAND", err);
-		return;
-	}
-
 	temp_double = (double)temp_int/(double)DS18B20_MUL;
 	dtostrf(temp_double, 2, 4, string_temperature);
-	sprints("[%d] temp (int * %d) = %d, temp (double) = %s",
-			cntr, DS18B20_MUL, temp_int, string_temperature);
+	sprints("temperature_demo: temp (int * %d) = %d, temp (double) = %s",
+			DS18B20_MUL, temp_int, string_temperature);
 }
 #endif
