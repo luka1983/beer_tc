@@ -69,7 +69,7 @@ struct temperature_channel *temperature_get_channel_by_name(const char *name)
 
 	for(i = 0;i < ARRAYSIZE(channels);i++) {
 		if (strcmp(channels[i].name, name) == 0)
-			return &channels[i];	
+			return &channels[i];
 	}
 
 	return NULL;
