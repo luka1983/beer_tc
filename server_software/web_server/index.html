@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="">
+<meta name="author" content="Matija Glavinic Pecotic">
+
+<title>BeerMon</title>
+
+<link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+
+<!-- Bootstrap Core CSS -->
+<link href="css/bootstrap.min.css" rel="stylesheet">
+
+<!-- Custom CSS -->
+<link href="css/site-specific.css" rel="stylesheet">
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+<!--[if IE]><script type="text/javascript" src="excanvas.js"></script><![endif]-->
+
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+
+<!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+<!--[if lt IE 9]>
+<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+<![endif]-->
+<script>
+
+google.load('visualization', '1.0', {'packages':['gauge', 'line', 'corechart']});
+
+/* Control how much points do we write on graph. 450 is already making page
+ * un-responsive, so set 400 builds as a limit, it aproximately covers a month.
+ */
+var maximum_points=400;
+
+/*!
+ * \fn read_file() 
+ * \brief read local file from the server
+ *
+ *  Read local file from the server
+ * 
+ *  \param file_name - file name
+ *
+ *  \returns response in form of text
+ */
+function read_file(file_name)
+{
+	var xmlhttp=new XMLHttpRequest();
+
+	xmlhttp.open("GET", "./" + file_name,false);
+	xmlhttp.send();
+
+	if (xmlhttp.status == 200) {
+		var lines = xmlhttp.responseText.split("\n");
+		var items_to_return = lines.length - maximum_points;
+		if (items_to_return < 1) {
+			return xmlhttp.responseText;
+		} else {
+			var lines_to_return = lines.slice(items_to_return, lines.length);
+			return lines_to_return.join("\n");
+		}
+	} else {
+		return null;
+	}
+}	
+
+/*!
+ * \fn set_maximum_points(nr_points) 
+ * \brief set how much points will be displayed on graph
+ *
+ *  Sets number of points to be processed by display logic
+ * 
+ *  \param nr_points - number of points
+ */
+function set_maximum_points(nr_points)
+{
+	maximum_points = nr_points;
+}
+
+/**
+ * Function is called when row in table is clicked. Params are 
+ * same as theones given to modal above
+ */
+function display_selected_graph(graph, title, value_axis_title)
+{
+	console.log('Table row clicked:' + graph);
+}
+
+/**
+  * Functon parses date in form 2012-03-12 12:34:34 format
+  * and returns new Date object
+  */
+function parse_date(datestring)
+{
+	var year, month, day, hour, minute, second;
+	var tmp = datestring.split(" ");
+	
+	var date = tmp[0];
+	var time = tmp[1];
+
+	explode_date = date.split("-");
+	year = explode_date[0];
+	month = explode_date[1];
+	day = explode_date[2];
+
+	explode_time = time.split(":");
+	hour = explode_time[0];
+	minute = explode_time[1];
+	second = 0;
+
+	return new Date(year, month-1, day, hour, minute, second);
+}
+
+/* Function draws graphs AND populates table graph-table with minmax values.
+ * This function does too much, but thats in the favour of going only once
+ * through whole data set.
+ * Arguments are:
+ * container_id - id of the container where graph will be shown
+ * graphs - array with names of the files with input data
+ * line_labes - array with 1 to 1 mapping how data will be called in legend
+ * title - graph title
+ * value_axis_title - y-axis data name
+ */
+function draw_graphs(container_id, graphs, line_labels, title, value_axis_title, draw_table)
+{
+	var i, j;
+	var data = new Array();
+
+	var joined_data = new google.visualization.DataTable();
+
+	var minimum = [];
+	var maximum = [];
+
+	var min_max_table = '<table class="table table-hover table-condensed"><caption>'+ 
+			title +
+			'</caption><thead><tr><th>Sensor</th><th>Minimum Value (Date)'+
+			'</th><th>Maximum Value (Date)</th></tr></thead><tbody>';
+
+	for (i = 0; i < graphs.length; i++) {
+		minimum[i] = null;
+		maximum[i] = null;
+
+		file = read_file("results/" + graphs[i]);
+		if (file == null) {
+			console.log("Couldnt load file " + graphs[i]);
+			// here should be continue, but below logic breaks
+			// in such case, so just do this and hope no one saw
+			// it. This will result in empty datasets and nothing
+			// displayed
+			file = "null"
+		} else {
+			console.log("Read file " + graphs[i]) 
+		}
+		var lines = file.split('\n');
+		//console.log("Lines: " + lines.length)
+
+		data[i] = new google.visualization.DataTable();
+		data[i].addColumn('date', 'Date');
+		data[i].addColumn('number', line_labels[i]);
+
+		for (j = 0; j < lines.length; j++) {
+
+			/* Lines are in format 2012-03-14 23:45:32,value */
+			var val = lines[j].split(',');
+			var date = val[0]
+			if (typeof val[1] === 'undefined') {
+				continue
+			}
+			ts = parse_date(date);
+			data[i].addRow([ts, Number(val[1])]);
+			
+			if (minimum[i] == null) {
+				minimum[i] = [];
+				minimum[i] = [ date, val[1] ];
+			} else {
+				if (Number(minimum[i][1]) > Number(val[1])) {
+					minimum[i] = [date, val[1]];
+				}
+			}
+			if (maximum[i] == null) {
+				maximum[i] = [];
+				maximum[i] = [ date, val[1] ];
+			} else {
+				if (Number(maximum[i][1]) < Number(val[1])) {
+					maximum[i] = [date, val[1]];
+				}
+			}
+		}
+
+		/* This is just to have table with different row colors bg */
+		if (i % 2) {
+			tr_class = "success"
+		} else {
+			tr_class = "info"   
+		}
+
+		min_max_table += 
+			'<tr class="' + tr_class  + '" style="cursor: pointer;" onclick="display_selected_graph(' 
+				+ '\'' + graphs[i] + '\''  + ',' + '\''  + title + '\''  + ',' 
+				+ '\''  + value_axis_title + '\''  + ')">';
+
+		min_max_table += '<td>' + line_labels[i] + 
+			'</td><td>' + minimum[i][1] + ' ('
+			+ minimum[i][0] + ')</td><td>' + maximum[i][1]
+			+ ' (' + maximum[i][0] + ')</td></tr>';
+	}
+
+	min_max_table += '</tbody></table>';
+
+	if (draw_table) {
+		var table_element = document.getElementById(container_id + '-table');
+		table_element.innerHTML = min_max_table;
+	}
+
+	if (graphs.length > 1) {
+		var columns = new Array();
+		columns[0] = 1;
+		joined_data = google.visualization.data.join(data[0], data[1], 'full', [[0, 0]], [1], [1]);
+		for(i = 2; i < graphs.length; i++) {
+			columns[i-1] = i;			
+			joined_data = google.visualization.data.join(joined_data, data[i], 'full', [[0, 0]], columns, [1]);
+		}
+	} else {
+		joined_data = data[0];
+	}	
+
+	var options = {
+		height: 500,
+		title: title,
+		curveType: 'function',
+		legend: { position: 'none' },
+		explorer : {},
+		hAxis: {
+			title: 'Datum'
+			},
+		vAxis: {
+			title: value_axis_title
+		},
+		legend: { position: 'top'},
+		pointSize: 4,
+	};
+
+	var chart = new google.visualization.LineChart(document.getElementById(container_id));
+
+	chart.draw(joined_data, options);
+}
+
+/**
+  * Functions executes on body load - main()
+  */
+function bodyOnLoad()
+{
+	var temperature_inputs = ["t1", "t2"];
+	var line_labels = ["T1", "T2"];
+	draw_graphs("temperature", temperature_inputs, line_labels, 'Temperature Sensors', "T [C]", true);
+
+	//var humidity_inputs = ["paprika_hum", "benjamin_hum" ];
+	//var line_labels = ["Paprika", "Benjamin", "FCTJ (AXM5516)", "FCTJ-AXM (Cores 0-3)", "FSPJ (K2)"];
+	//draw_graphs("vlaznost", humidity_inputs, line_labels, 'Vlaznost Zemlje', "Relativna vlaznost [%]", true);
+}
+
+</script>
+
+</head>
+
+<body onload=bodyOnLoad() id="body">
+	<!-- Navigation -->
+	<div class="container-fluid">
+		<nav class="navbar navbar-fixed-top" role="navigation">
+			<div class="container">
+				<!-- Brand and toggle get grouped for better mobile display -->
+				<div class="navbar-header">
+					<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+						<span class="sr-only">Toggle navigation</span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+					</button>
+					<a class="navbar-brand" href="#top">Vrh</a>
+				</div>
+				<!-- Collect the nav links, forms, and other content for toggling -->
+				<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+					<ul class="nav navbar-nav">
+					<li>
+					<a href="#TIV">Temperature</a>
+					</li>
+					<li>
+					<a href="#contact">Contact</a>
+					</li>
+					<li class="dropdown">
+					<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+						<b>Results limit<span class="caret"></span></b></a>
+					<ul class="dropdown-menu">
+						<li><a href="javascript:void(0);" onclick="set_maximum_points(2000)">last 2000</a></li>
+						<li><a href="javascript:void(0);" onclick="set_maximum_points(400)">last 400 (default)</a></li>
+						<li><a href="javascript:void(0);" onclick="set_maximum_points(100)">last 100</a></li>
+						<li><a href="javascript:void(0);" onclick="set_maximum_points(20)">last 20</a></li>
+						<li role="separator" class="divider"></li>
+						<li><a href="javascript:void(0);" onclick="set_maximum_points(99999)">All</a></li>
+						<li role="separator" class="divider"></li>
+						<li><a href="javascript:void(0);"><span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>When set, click hide/show</a></li>
+					</ul>
+					</li>
+					</ul>
+				</div>
+			</div>
+		</nav>
+	</div>
+
+	<!-- Page Content  -->
+	<!-- Header -->  
+	<div class="container-fluid text-center">
+		<br>
+		<br>
+		<h1>BeerMon <small></small></h1>
+		<hr>
+	</div>
+
+	<!-- Temperature, this is displayed by default  -->
+	<div class="container">
+		<div class="row">
+			<h3 id="TIV">Temperature <small>
+				<a id="toggle_about" href="#help" data-toggle="collapse"><span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span> info</a>
+				<a id="toggle_rand" href="#tiv" data-toggle="collapse"><span class="glyphicon glyphicon-resize-full" aria-hidden="true"></span> hide/show</a>
+				</small>
+			</h3>
+			<hr>
+			<div class="col-sm-12">
+				<div class="collapse" id="help">
+					<p class="text-blue-big">Temperature Sensors</p>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Temperature, humidty, graphs and tables placeholders  -->
+	<div class="container" class="collapse in" id="tiv">
+		<div class="row">
+			<div id="temperature"></div>
+		</div>
+		<div class="row">
+			<div id="vlaznost"></div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<div id="temperature-table"></div>
+			</div>
+			<div class="col-sm-12">
+				<div id="vlaznost-table"></div>
+			</div>
+		</div>
+		<hr>
+	</div>
+
+	<!-- Footer -->
+	<div class="container">
+		<div class="row" id="contact">
+			<h3>Contact</h3>
+			<hr>
+			<div class="col-lg-12 text-center">
+				<p><i>BeerMon 1.0</i></p>
+			</div>
+		</div>
+	</div>
+
+	<!-- jQuery -->
+	<script src="js/jquery.js"></script>
+
+	<!-- Bootstrap Core JavaScript -->
+	<script src="js/bootstrap.min.js"></script>
+
+</body>
+
+</html>
