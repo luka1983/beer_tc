@@ -4,7 +4,7 @@ After=multi-user.target
 
 [Service]
 Type=simple
-ExecStart=/home/admin/beermon_handler.py
+ExecStart=/home/admin/git/beer_tc/server_software/apps/beermon_handler.py
 Restart=always
 
 StandardOutput=syslog
