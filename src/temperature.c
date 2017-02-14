@@ -10,7 +10,11 @@
  */
 #include <stdlib.h>
 #include <util/delay.h>
+#include <string.h>
 #include "temperature.h"
+#include "temperature_channel_config.h"
+
+#define ARRAYSIZE(arr) (sizeof(arr) / sizeof(arr[0]))
 
 static int temperature_read_ds18b20(volatile uint8_t *ds18b20_port,
 		  volatile uint8_t *ds18b20_direction,
@@ -57,4 +61,23 @@ int16_t temperature_read(struct temperature_channel *tc, int16_t *temperature)
 	}
 
 	return err;
+}
+
+struct temperature_channel *temperature_get_channel_by_name(const char *name)
+{
+	int i;
+
+	for(i = 0;i < ARRAYSIZE(channels);i++) {
+		if (strcmp(channels[i].name, name) == 0)
+			return &channels[i];	
+	}
+
+	return NULL;
+}
+
+void temperature_get_all_channel_names(int *size, char *names[])
+{
+	for(*size = 0;*size < ARRAYSIZE(channels);(*size)++) {
+		names[*size] = channels[*size].name;
+	}
 }

@@ -16,12 +16,24 @@
 #include "temperature.h"
 
 /* Sensor configuration for channel 1 */
-struct temperature_channel channel_1 = {
+struct temperature_channel channels[] = {
+	{
+	.name = "t1",
 	.sensor = temperature_sensor_ds18b20,
 	.result_multiplier = DS18B20_MUL,
 	.ds18b20_port = &PORTD,
 	.ds18b20_direction = &DDRD,
 	.ds18b20_portin = &PIND,
 	.pin_mask = 1 << 6
+	},
+	{
+	.name = "t2",
+	.sensor = temperature_sensor_ds18b20,
+	.result_multiplier = DS18B20_MUL,
+	.ds18b20_port = &PORTD,
+	.ds18b20_direction = &DDRD,
+	.ds18b20_portin = &PIND,
+	.pin_mask = 1 << 5
+	},
 };
 #endif

@@ -21,6 +21,8 @@
 #define TEMPERATURE_ERROR_OTHER 4
 #define TEMPERATURE_UNKNOWN_SENSOR_TYPE 5
 
+#define TEMPERATURE_MAX_NAME_SIZE 12
+
 /* Types of sensors */
 typedef enum {
 	/* ds18b20 */
@@ -34,6 +36,9 @@ typedef enum {
  * temperature sensor
  * */
 struct temperature_channel {
+	/* Name of the channel */
+	char name[TEMPERATURE_MAX_NAME_SIZE];
+
 	/* Type of the sensor */
 	sensor_t sensor;
 
@@ -50,6 +55,24 @@ struct temperature_channel {
 	/* mask of the pin to which ds18b20 is connected */
 	uint8_t pin_mask;
 };
+
+/**
+ * Function gets temperature structure by its name
+ * */
+struct temperature_channel *temperature_get_channel_by_name(const char *name);
+
+/**
+ * Function gets names of all supported channels
+ *
+ * Function returns array of strings with channel names
+ * which can further be used in e.g. temperature_get_channel_by_name
+ *
+ * Parameters:
+ *
+ * size [OUT] - number of names, number of channels
+ * names [OUT] - arrays of names
+ * */
+void temperature_get_all_channel_names(int *size, char *names[]);
 
 /**
  * temperature_read - Read temperature from channel
@@ -69,44 +92,6 @@ struct temperature_channel {
  * Returns:
  * Function returns 0/TEMPERATURE_OK in case all went fine, or
  * error code defined in temperature.h
- *
- * Usage:
- * First, define channel data, this should be put in e.g.
- * temperature_channel_config.h:
- *
- * struct temperature_channel channel_1 = {
- *	.sensor = temperature_sensor_ds18b20,
- *	.result_multiplier = DS18B20_MUL,
- *	.ds18b20_port = &PORTD,
- *	.ds18b20_direction = &DDRD,
- *	.ds18b20_portin = &PIND,
- *	.pin_mask = 1 << 6
- * };
- *
- * Here it is assumed ds18b20 is used. Next, use defined channel in
- * reading the temperature, e.g.
- *
- * Defines:
- * #include <util/delay.h>
- * #include <stdlib.h>
- * #include "temperature.h"
- * #include "temperature_channel_config.h"
- *
- * Code:
- * int temp_int = 0, err = 0;
- * double temp_double = 0;
- * char string_temperature[32];
- *
- * err = temperature_read(&channel_1, &temp_int);
- * if (err != 0) {
- *	sprints("Error (%d) while temperature_read", err);
- *	return;
- * }
- *
- * temp_double = (double)temp_int/(double)channel_1.result_multiplier;
- * dtostrf(temp_double, 2, 4, string_temperature);
- * sprints("temperature_demo: temp (int * %d) = %d, temp (double) = %s",
- *		channel_1.result_multiplier, temp_int, string_temperature);
  * */
 extern int16_t temperature_read(struct temperature_channel *tc, int16_t *temperature);
 #endif
