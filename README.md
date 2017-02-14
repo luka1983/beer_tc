@@ -39,18 +39,27 @@ To install handler for messages, copy server_software/apps/beermon_handler.py to
 
 It is possible you'll need some additional SW. To install necessary SW, execute (at least):
 
+```
 sudo apt-get update
 sudo apt-get install python python3 mosquitto mosquitto-clients python-mosquitto python3-pip python-pip -y
 sudo pip3 install paho-mqtt
 sudo pip2 install paho-mqtt
+```
 
 After this, make sure your firewall is configured to receive on 1883
 
 Once beermon_handler.py works, you can proceed with service installation. Copy beermon.service:
 
-$ sudo cp beermon.service /etc/systemd/system/
-$ sudo systemctl enable beermon.service
-$ sudo systemctl start beermon
+```
+sudo cp beermon.service /etc/systemd/system/
+sudo systemctl enable beermon.service
+sudo systemctl start beermon
+```
+
+### RPi Software
+
+RPi part is installed by executing rpi/beermon-rpi.py on rpi startup. Work on rpi is still in progress
+
 
 ## AVR Toolchain
 
