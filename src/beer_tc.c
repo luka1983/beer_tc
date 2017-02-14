@@ -31,7 +31,6 @@ int main(void) {
 }
 
 #ifdef DS18B20_DEMO
-
 void temperature_demo(void)
 {
 	int temp_int = 0, err = 0;
@@ -43,9 +42,9 @@ void temperature_demo(void)
 		sprints("Error (%d) while temperature_read", err);
 		return;
 	}
-	temp_double = (double)temp_int/(double)DS18B20_MUL;
+	temp_double = (double)temp_int/(double)channel_1.result_multiplier;
 	dtostrf(temp_double, 2, 4, string_temperature);
 	sprints("temperature_demo: temp (int * %d) = %d, temp (double) = %s",
-			DS18B20_MUL, temp_int, string_temperature);
+			channel_1.result_multiplier, temp_int, string_temperature);
 }
 #endif
