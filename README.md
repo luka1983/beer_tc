@@ -46,6 +46,12 @@ sudo pip2 install paho-mqtt
 
 After this, make sure your firewall is configured to receive on 1883
 
+Once beermon_handler.py works, you can proceed with service installation. Copy beermon.service:
+
+$ sudo cp beermon.service /etc/systemd/system/
+$ sudo systemctl enable beermon.service
+$ sudo systemctl start beermon
+
 ## AVR Toolchain
 
 These instruction assume that either USBasp or buspirate AVR programmer with avrdude are used for device programming.
