@@ -21,7 +21,6 @@ MQTT_HOST_PORT=1883
 RESULT_DIR="/var/www/html/beer/results/"
 
 def process_message(topic, text):
-    print("Processing message")
     sensor = topic.split('/')[-1]
     date_value_pair = text.split(',')
     if date_value_pair[0] is not None:
@@ -29,20 +28,19 @@ def process_message(topic, text):
         date_pattern = re.compile("2[0-9]{3}-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-5][0-9]:[0-5][0-9]")
         if date_pattern.match(date_value_pair[0]):
             date = date_value_pair[0]
-            print("Date pattern matches! " + date)
         else:
-            print("Pattern on date doesnt match");
+            print("ERROR: Pattern on date doesnt match");
             return
     if date_value_pair[1] is not None:
         # Check that value matches decimal number
         value_pattern = re.compile("[\d\.\d]+")
         if value_pattern.match(date_value_pair[1]):
             value = date_value_pair[1];
-            print("Value pattern matches! " + value);
         else:
-            print("Pattern on value doesnt match");
+            print("ERROR: Pattern on value doesnt match");
             return
     with open(RESULT_DIR + sensor, "a") as myfile:
+        print("Writing %s to %s" %(text, RESULT_DIR + sensor))
         myfile.write(text)
 
 def beermon_handler_on_connect(client, userdata, rc):
@@ -51,7 +49,7 @@ def beermon_handler_on_connect(client, userdata, rc):
 
 def beermon_handler_on_message(client, userdata, msg):
     text = msg.payload.decode(encoding="utf-8", errors="ignore")
-    print("Got message, topic <%s>, text <%s>" %(msg.topic, text))
+    print("Processing message: topic <%s>, text <%s>" %(msg.topic, text))
     process_message(msg.topic, text)
 
 if __name__ == "__main__":
