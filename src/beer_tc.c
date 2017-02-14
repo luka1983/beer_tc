@@ -1,5 +1,5 @@
 /* Comment out to leave 18b20 demo code out */
-#define DS18B20_DEMO
+//#define DS18B20_DEMO
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
