@@ -41,7 +41,7 @@ def process_message(topic, text):
             return
     with open(RESULT_DIR + sensor, "a") as myfile:
         print("Writing %s to %s" %(text, RESULT_DIR + sensor))
-        myfile.write(text)
+        myfile.write(text + "\n")
 
 def beermon_handler_on_connect(client, userdata, rc):
     print("Connected with result code "+str(rc))
