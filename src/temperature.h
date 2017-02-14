@@ -69,6 +69,44 @@ struct temperature_channel {
  * Returns:
  * Function returns 0/TEMPERATURE_OK in case all went fine, or
  * error code defined in temperature.h
+ *
+ * Usage:
+ * First, define channel data, this should be put in e.g.
+ * temperature_channel_config.h:
+ *
+ * struct temperature_channel channel_1 = {
+ *	.sensor = temperature_sensor_ds18b20,
+ *	.result_multiplier = DS18B20_MUL,
+ *	.ds18b20_port = &PORTD,
+ *	.ds18b20_direction = &DDRD,
+ *	.ds18b20_portin = &PIND,
+ *	.pin_mask = 1 << 6
+ * };
+ *
+ * Here it is assumed ds18b20 is used. Next, use defined channel in
+ * reading the temperature, e.g.
+ *
+ * Defines:
+ * #include <util/delay.h>
+ * #include <stdlib.h>
+ * #include "temperature.h"
+ * #include "temperature_channel_config.h"
+ *
+ * Code:
+ * int temp_int = 0, err = 0;
+ * double temp_double = 0;
+ * char string_temperature[32];
+ *
+ * err = temperature_read(&channel_1, &temp_int);
+ * if (err != 0) {
+ *	sprints("Error (%d) while temperature_read", err);
+ *	return;
+ * }
+ *
+ * temp_double = (double)temp_int/(double)channel_1.result_multiplier;
+ * dtostrf(temp_double, 2, 4, string_temperature);
+ * sprints("temperature_demo: temp (int * %d) = %d, temp (double) = %s",
+ *		channel_1.result_multiplier, temp_int, string_temperature);
  * */
 extern int16_t temperature_read(struct temperature_channel *tc, int16_t *temperature);
 #endif
