@@ -58,8 +58,7 @@ sudo systemctl start beermon
 
 ### RPi Software
 
-RPi part is installed by executing rpi/beermon-rpi.py on rpi startup. Work on rpi is still in progress
-
+RPi part is installed by executing rpi/beermon-rpi.py on rpi startup. For detailed instructions, check instructions within rpi sw directory.
 
 ## AVR Toolchain
 
