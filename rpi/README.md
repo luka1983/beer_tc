@@ -3,15 +3,15 @@
 This script serves as a control interface to the temperature
 controller. Its task is to read current temperature, and
 possibily other sensors, and send output via mqtt to the
-predefined server. Thsi part runs automatically and doesnt
+predefined server. This part runs automatically and doesn't
 need user's intervention.
 
 The other part is setting certain values to the controller,
 e.g. temperature. This is done via mqtt interface. For latest
-topics and messages, check the script. Here are current configurable
-values:
+topic names and messages, check the script. Here are current
+configurable values:
 
-beermon_config/ts - get/set controller's temperature
+ * beermon_config/ts - get/set controller's temperature
 
 To interface with setting/getting use mqtt. To check last value,
 subscribe to the topic/variable, e.g.:
