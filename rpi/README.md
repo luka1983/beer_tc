@@ -36,3 +36,21 @@ To set variable, send value to the topic/variable
 ```
 $ mosquitto_pub -t beermon_config/ts -m "18.5"
 ```
+
+## Installing the script in general
+
+At the moment, script is started automatically on rpi by managment
+sw from previous project. It can also be started via systemd, check
+web_server for template if needed.
+
+Requirements for the script are:
+
+```
+$ sudo apt-get update
+$ sudo apt-get install python python3 mosquitto mosquitto-clients python-mosquitto python3-pip python-pip -y
+$ sudo pip3 install paho-mqtt
+$ sudo pip2 install paho-mqtt
+$ sudo pip2 install pyserial
+$ sudo pip3 install pyserial
+```
+
