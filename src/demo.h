@@ -16,34 +16,45 @@
 #include <stdlib.h>
 #include "temperature.h"
 
+/**
+ * Temperature read example
+ *
+ * Function demonstrates reading temperature and going over
+ * all channels. Instead of going over all channels, one could
+ * immediately supply known name to function:
+ * temperature_get_channle_by_name
+ */
 void temperature_demo(void)
 {
 	int temp_int = 0, err = 0, channel_no, i;
 	double temp_double = 0;
 	char string_temperature[12];
 	char *names[10];
-	struct temperature_channel *tc = temperature_get_channel_by_name("t1");
+	struct temperature_channel **tc;
 
 	temperature_get_all_channel_names(&channel_no, names);
+
+	tc = (struct temperature_channel **) malloc (sizeof(struct temperature_channel*) * channel_no);
+
 	for(i = 0; i < channel_no; i++) {
-		sprints("Channel %d, name <%s>", i, names[i]);
+		tc[i] = temperature_get_channel_by_name(names[i]);
+		if (tc[i] == NULL) {
+			sprints("Could not find channel <%s>", names[i]);
+		}
 	}
 
-	if (tc == NULL) {
-		sprints("Error - could not find channel");
-		return;
-	}
+	for(i = 0; i < channel_no; i++) {
+		err = temperature_read(tc[i], &temp_int);
+		if (err != 0) {
+			sprints("channel %s: error (%d) while temperature_read", tc[i]->name, err);
+			continue;
+		}
+		temp_double = (double)temp_int/(double)tc[i]->result_multiplier;
 
-	err = temperature_read(tc, &temp_int);
-	if (err != 0) {
-		sprints("Error (%d) while temperature_read", err);
-		return;
+		dtostrf(temp_double, 2, 4, string_temperature);
+		sprints("channel %s: temperature: %s C", tc[i]->name, string_temperature);
 	}
-	temp_double = (double)temp_int/(double)tc->result_multiplier;
-
-	dtostrf(temp_double, 2, 4, string_temperature);
-	sprints("temperature_demo: temp (int * %d) = %d, temp (double) = <%s> C",
-			tc->result_multiplier, temp_int, string_temperature);
+	free(tc);
 }
 
 #endif
