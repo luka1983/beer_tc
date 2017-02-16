@@ -115,7 +115,7 @@ port=/dev/ttyUSB0
 To program device, execute:
 
 ```
-sudo avrdude -c buspirate -P /dev/ttyUSBx -p m328p -u -U flash:w:bin/beer_tc.hex
+sudo avrdude -c buspirate -P $port -p m328p -u -U flash:w:bin/beer_tc.hex
 ```
 
 To power atmega from buspirate, execute:
