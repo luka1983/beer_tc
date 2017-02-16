@@ -29,8 +29,15 @@ void temperature_demo(void)
 	int temp_int = 0, err = 0, channel_no, i;
 	double temp_double = 0;
 	char string_temperature[12];
-	char *names[10];
+	char **names;
 	struct temperature_channel **tc;
+
+	channel_no = temperature_get_nr_channels();
+	if (channel_no == 0) {
+		sprints("Error - no channels configured");
+		return;
+	}
+	names = (char **) malloc (sizeof(char*) * channel_no);
 
 	temperature_get_all_channel_names(&channel_no, names);
 
@@ -55,6 +62,7 @@ void temperature_demo(void)
 		sprints("channel %s: temperature: %s C", tc[i]->name, string_temperature);
 	}
 	free(tc);
+	free(names);
 }
 
 #endif
