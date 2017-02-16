@@ -81,3 +81,8 @@ void temperature_get_all_channel_names(int *size, char *names[])
 		names[*size] = channels[*size].name;
 	}
 }
+
+int temperature_get_nr_channels(void)
+{
+	return ARRAYSIZE(channels);
+}

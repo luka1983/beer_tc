@@ -75,6 +75,15 @@ struct temperature_channel *temperature_get_channel_by_name(const char *name);
 void temperature_get_all_channel_names(int *size, char *names[]);
 
 /**
+ * Function gets number of channels
+ *
+ * Returns number of channels. This number may be used
+ * to allocate array for temperature_get_all_channel_names
+ *
+ * */
+int temperature_get_nr_channels(void);
+
+/**
  * temperature_read - Read temperature from channel
  *
  * Function reads temperature from predefined channel. Depending
