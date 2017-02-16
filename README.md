@@ -98,11 +98,31 @@ sudo apt-get install avr-libc avrdude binutils-avr gcc-avr srecord
 Clone the repo, build the sources with _make_, and push _hex_ file
 to board with following command.
 
-usbasp:
-       $ avrdude -c usbasp -p m328p -u -U flash:w:beer_tc.hex
+### usbasp
 
-buspirate:
-       $ sudo avrdude -c buspirate -P /dev/ttyUSB2 -p m328p -u -U flash:w:beer_tc.hex
+```
+$ avrdude -c usbasp -p m328p -u -U flash:w:beer_tc.hex
+```
+
+### buspirate:
+
+Before any operations, learn port of the buspirate and set it:
+
+```
+port=/dev/ttyUSB0
+```
+
+To program device, execute:
+
+```
+sudo avrdude -c buspirate -P /dev/ttyUSBx -p m328p -u -U flash:w:bin/beer_tc.hex
+```
+
+To power atmega from buspirate, execute:
+
+```
+echo "m 2 " > $port;echo "W" > $port
+```
 
 ## Command set
 When beer_tc is running on AVR board, the following commands can be issued via serial interface. all
