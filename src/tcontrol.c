@@ -20,11 +20,16 @@ int32_t get_t1() {
 	return controller.ts;
 }
 
+int32_t get_t2() {
+	return controller.ts;
+}
+
 void init_control_loop(uint32_t tc) {
 	// command interface initialization
 	set_command_handler(GetTs, &get_ts);
 	set_command_handler(SetTs, &set_ts);
-	set_command_handler(GetT1, &set_ts);
+	set_command_handler(GetT1, &set_t1);
+	set_command_handler(GetT2, &set_t2);
 
 	// command loop interropt initialization
 	DDRB |= 0x20;

@@ -41,7 +41,8 @@ struct CBuffer {
 struct Command commands[] = {
 	{ .ctype = GetCmd, .otype = Decimal, .oname = Ts, .fp = NULL },
 	{ .ctype = SetCmd, .otype = Decimal, .oname = Ts, .fp = NULL },
-	{ .ctype = GetCmd, .otype = Decimal, .oname = T1, .fp = NULL }
+	{ .ctype = GetCmd, .otype = Decimal, .oname = T1, .fp = NULL },
+	{ .ctype = GetCmd, .otype = Decimal, .oname = T2, .fp = NULL }
 };
 
 void set_command_handler(Cname cname, void* fp) {
