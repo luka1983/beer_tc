@@ -3,22 +3,28 @@
 #include "serial.h"
 #include "tcontrol.h"
 #include "commands.h"
+#include "temperature.h"
 
-static struct TempController controller = { .temp = 0, .temp_set = 2 };
+static struct TempController controller = { .t1 = 0, .ts = 2 };
 
 int32_t get_ts() {
-	return controller.temp_set;
+	return controller.ts;
 }
 
 uint8_t set_ts(int32_t ts) {
-	controller.temp_set = ts;
+	controller.ts = ts;
 	return 0;
+}
+
+int32_t get_t1() {
+	return controller.ts;
 }
 
 void init_control_loop(uint32_t tc) {
 	// command interface initialization
 	set_command_handler(GetTs, &get_ts);
 	set_command_handler(SetTs, &set_ts);
+	set_command_handler(GetT1, &set_ts);
 
 	// command loop interropt initialization
 	DDRB |= 0x20;
@@ -41,14 +47,6 @@ void start_control_loop() {
 void stop_control_loop() {
 	TCCR1B &= ~((1 << CS10) | (1 << CS12));
 	return;
-}
-
-int32_t read_temp() {
-	return controller.temp;
-}
-
-int32_t read_temp_set() {
-	return controller.temp_set;
 }
 
 ISR(TIMER1_COMPA_vect) {

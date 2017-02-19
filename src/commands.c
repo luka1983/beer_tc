@@ -38,9 +38,10 @@ struct CBuffer {
 	uint8_t cnt;
 };
 
-struct Command commands[2] = {
+struct Command commands[] = {
 	{ .ctype = GetCmd, .otype = Decimal, .oname = Ts, .fp = NULL },
-	{ .ctype = SetCmd, .otype = Decimal, .oname = Ts, .fp = NULL }
+	{ .ctype = SetCmd, .otype = Decimal, .oname = Ts, .fp = NULL },
+	{ .ctype = GetCmd, .otype = Decimal, .oname = T1, .fp = NULL }
 };
 
 void set_command_handler(Cname cname, void* fp) {
@@ -175,7 +176,10 @@ void parse_command(struct CBuffer* cb) {
 
 	read_command_token(cb, tok);
 	struct Command* cmd = find_command(ct, on);
-	if (ct == GetCmd && tok[0] != '\0') {
+	if (cmd == NULL) {
+		sprintf(cb->res, "%s", "command not supported");
+	}
+	else if (ct == GetCmd && tok[0] != '\0') {
 		sprintf(cb->res, "%s", "to many arguments");
 	}
 	else if (ct == GetCmd) {

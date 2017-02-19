@@ -1,11 +1,16 @@
 struct TempController {
-	int32_t temp;
-	int32_t temp_set;
+	int32_t ts;
+	int32_t t1;
 };
 
 // init control loop, requires tc in ms
 void init_control_loop(uint32_t tc);
 void start_control_loop();
 void stop_control_loop();
-int32_t read_temp();
-int32_t read_temp_set();
+
+// controller set temperature
+int32_t get_ts();
+uint8_t set_ts();
+
+// controller temperature readings
+int32_t get_t1();
