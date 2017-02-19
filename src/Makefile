@@ -2,7 +2,7 @@
 FCPU		= 16000000UL
 
 PRG			= beer_tc
-OBJS		= beer_tc.o tcontrol.o serial.o
+OBJS		= beer_tc.o tcontrol.o serial.o commands.o
 
 MCU_TARGET	= atmega328p
 
@@ -31,6 +31,9 @@ tcontrol.o: tcontrol.c
 
 serial.o: serial.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -c serial.c
+
+commands.o: commands.c
+	$(CC) $(CFLAGS) $(LDFLAGS) -c commands.c
 
 clean:
 	rm -rf *.o $(PRG).elf $(PRG).hex *.bak 

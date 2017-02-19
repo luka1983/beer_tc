@@ -1,9 +1,26 @@
-#include "tcontrol.h"
+#include <avr/io.h>
+#include <avr/interrupt.h>
 #include "serial.h"
+#include "tcontrol.h"
+#include "commands.h"
 
-static temp_controller controller = { .temp = 0, .temp_set = 0 };
+static struct TempController controller = { .temp = 0, .temp_set = 2 };
+
+int32_t get_ts() {
+	return controller.temp_set;
+}
+
+uint8_t set_ts(int32_t ts) {
+	controller.temp_set = ts;
+	return 0;
+}
 
 void init_control_loop(uint32_t tc) {
+	// command interface initialization
+	set_command_handler(GetTs, &get_ts);
+	set_command_handler(SetTs, &set_ts);
+
+	// command loop interropt initialization
 	DDRB |= 0x20;
 	TCCR1B |= (1 << WGM12);					// CTC mode on OCR1A match
 	TIMSK1 |= (1 << OCIE1A);				// Trigger int on compare match
@@ -26,11 +43,11 @@ void stop_control_loop() {
 	return;
 }
 
-uint16_t read_temp() {
+int32_t read_temp() {
 	return controller.temp;
 }
 
-uint16_t read_temp_set() {
+int32_t read_temp_set() {
 	return controller.temp_set;
 }
 
