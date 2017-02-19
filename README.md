@@ -146,12 +146,13 @@ If execution is successful, command returns _ok_. If not the command fail reason
 ### Command objects
 While _get_ command is supported for all listed objects, only some can be updated with _set_ command.
 
-| object | type      | r/w | value                                            |
-|:------:|-----------|-----|--------------------------------------------------|
-| ts     | decimal   | rw  | controller set temperature                       |
-| t1     | decimal   | ro  | temperature reading for 1st sensor               |
-| t2     | decimal   | ro  | temperature reading for 2nd sensor               |
-| dt     | integer   | rw  | control loop discretization time (ms)            |
-| ct     | integer   | rw  | minimal output change interval duration (s)      |
-| un     | string    | rw  | unit system in use, i for imperial, m for metric |
-| fw     | string    | ro  | firmware version                                 |
+| object | type      | r/w | description                                      | status |
+|:------:|-----------|-----|--------------------------------------------------|--------|
+| ts     | decimal   | rw  | controller set temperature                       | a      |
+| t1     | decimal   | ro  | temperature reading for 1st sensor               | a      |
+| t2     | decimal   | ro  | temperature reading for 2nd sensor               | a      |
+| dt     | integer   | rw  | control loop discretization time (ms)            | n/a    |
+| ct     | integer   | rw  | minimal output change interval duration (s)      | n/a    |
+| un     | string    | rw  | unit system in use, i for imperial, m for metric | n/a    |
+| fw     | string    | ro  | firmware version                                 | n/a    |
+| id     | integer   | ro  | board id                                         | a      |

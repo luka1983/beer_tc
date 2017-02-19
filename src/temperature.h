@@ -39,6 +39,12 @@ struct temperature_channel {
 	/* Name of the channel */
 	char name[TEMPERATURE_MAX_NAME_SIZE];
 
+	/* Raw temperature reading */
+	int16_t temp_raw;
+
+	/* Temperature reading in degrees C */
+	int32_t temp_c;
+
 	/* Type of the sensor */
 	sensor_t sensor;
 
@@ -47,11 +53,11 @@ struct temperature_channel {
 
 	/* ds18b20 specific info */
 	/* PORT to which ds18b20 is connected */
-	volatile uint8_t *ds18b20_port;
+	volatile uint8_t *port;
 	/* Direction register of the port */
-	volatile uint8_t *ds18b20_direction;
+	volatile uint8_t *direction;
 	/* PORTIN register to which ds18b20 is connected */
-	volatile uint8_t *ds18b20_portin;
+	volatile uint8_t *portin;
 	/* mask of the pin to which ds18b20 is connected */
 	uint8_t pin_mask;
 };
@@ -72,7 +78,7 @@ struct temperature_channel *temperature_get_channel_by_name(const char *name);
  * size [OUT] - number of names, number of channels
  * names [OUT] - arrays of names
  * */
-void temperature_get_all_channel_names(int *size, char *names[]);
+void temperature_get_all_channel_names(int16_t *size, char *names[]);
 
 /**
  * Function gets number of channels
@@ -81,26 +87,28 @@ void temperature_get_all_channel_names(int *size, char *names[]);
  * to allocate array for temperature_get_all_channel_names
  *
  * */
-int temperature_get_nr_channels(void);
+int16_t temperature_get_nr_channels(void);
 
 /**
  * temperature_read - Read temperature from channel
  *
- * Function reads temperature from predefined channel. Depending
- * on the sensor, function can block for some amount of time. Here
- * are known durations for various sensors:
+ * Function reads temperature from predefined channel. If non async
+ * version is used, depending on the sensor, the function can block
+ * for some amount of time.The known durations for sensor types are:
  *
  * ds18b20 - 1000 ms
- * 
+ *
  * Parameters:
  *
- * tc [IN] - temperature channel config
- * temperature [OUT] - temperature which may be multiplied
- *		       with multiplier. Check tc.result_multiplier
+ * tc [IN]    - temperature channel config
+ * async [IN] - async temperature read, if used the the async read
+ *              is performed. This means that reading will lag for
+ *              one read period since the read itself triggers new
+ *              read but does not wait for its completion.
  *
  * Returns:
  * Function returns 0/TEMPERATURE_OK in case all went fine, or
  * error code defined in temperature.h
  * */
-extern int16_t temperature_read(struct temperature_channel *tc, int16_t *temperature);
+int16_t temperature_read(struct temperature_channel *tc, uint8_t async);
 #endif

@@ -6,7 +6,7 @@
 
 typedef enum { UnkCmd, GetCmd, SetCmd } CType;
 typedef enum { Integer, Decimal, String } OType;
-typedef enum { UnkName, Ts, T1, T2 } OName;
+typedef enum { UnkName, Ts, T1, T2, Id } OName;
 
 int32_t read_num(void* fp) {
 	return ((int32_t (*)(void))(fp))();
@@ -42,7 +42,8 @@ struct Command commands[] = {
 	{ .ctype = GetCmd, .otype = Decimal, .oname = Ts, .fp = NULL },
 	{ .ctype = SetCmd, .otype = Decimal, .oname = Ts, .fp = NULL },
 	{ .ctype = GetCmd, .otype = Decimal, .oname = T1, .fp = NULL },
-	{ .ctype = GetCmd, .otype = Decimal, .oname = T2, .fp = NULL }
+	{ .ctype = GetCmd, .otype = Decimal, .oname = T2, .fp = NULL },
+	{ .ctype = GetCmd, .otype = Integer, .oname = Id, .fp = NULL }
 };
 
 void set_command_handler(Cname cname, void* fp) {
@@ -77,6 +78,8 @@ OName get_command_object_name(const char* str) {
 		rv = T1;
 	else if (!strcmp("t2", str))
 		rv = T2;
+	else if (!strcmp("id", str))
+		rv = Id;
 	return rv;
 }
 
