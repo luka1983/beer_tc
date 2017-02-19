@@ -6,7 +6,7 @@
 #include "serial.h"
 #include "commands.h"
 
-static uint8_t terminal_mode = 0;
+static uint8_t terminal_mode = 1;
 
 void init_serial(uint16_t brate, uint8_t dbits, uint8_t parity, uint8_t sbits) {
 	uint16_t ubrr0 = (uint16_t) (F_CPU / (brate * 16UL)) - 1;

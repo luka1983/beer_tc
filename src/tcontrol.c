@@ -3,9 +3,8 @@
 #include "serial.h"
 #include "tcontrol.h"
 #include "commands.h"
-#include "temperature.h"
 
-static struct TempController controller = { .t1 = 0, .ts = 2 };
+static struct TempController controller = { .t1 = NULL, .t2 = NULL, .ts = 21 * DEC_DIV };
 
 int32_t get_ts() {
 	return controller.ts;
@@ -17,21 +16,25 @@ uint8_t set_ts(int32_t ts) {
 }
 
 int32_t get_t1() {
-	return controller.ts;
+	return controller.t1->temp_c;
 }
 
 int32_t get_t2() {
-	return controller.ts;
+	return controller.t1->temp_c;
 }
 
 void init_control_loop(uint32_t tc) {
+	// read temperature channel configuration
+	controller.t1 = temperature_get_channel_by_name("t1");
+	controller.t2 = temperature_get_channel_by_name("t1");
+
 	// command interface initialization
 	set_command_handler(GetTs, &get_ts);
 	set_command_handler(SetTs, &set_ts);
-	set_command_handler(GetT1, &set_t1);
-	set_command_handler(GetT2, &set_t2);
+	set_command_handler(GetT1, &get_t1);
+	set_command_handler(GetT2, &get_t2);
 
-	// command loop interropt initialization
+	// command loop interrupt initialization
 	DDRB |= 0x20;
 	TCCR1B |= (1 << WGM12);					// CTC mode on OCR1A match
 	TIMSK1 |= (1 << OCIE1A);				// Trigger int on compare match
@@ -57,4 +60,6 @@ void stop_control_loop() {
 ISR(TIMER1_COMPA_vect) {
 	// temperature control code here
 	PORTB ^= 0x20;
+	temperature_read(controller.t1, 1);
+	controller.t1->temp_c = DEC_DIV * controller.t1->temp_raw / controller.t1->result_multiplier;
 }

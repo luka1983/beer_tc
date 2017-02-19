@@ -1,7 +1,9 @@
+#include "temperature.h"
+
 struct TempController {
-	int32_t ts;
-	int32_t t1;
-	int32_t t2;
+	int32_t ts;							// control loop set temperature
+	struct temperature_channel* t1;		// main temperature sensor
+	struct temperature_channel* t2;		// secondary temperature sensor
 };
 
 // init control loop, requires tc in ms

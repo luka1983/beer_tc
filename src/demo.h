@@ -26,7 +26,7 @@
  */
 void temperature_demo(void)
 {
-	int temp_int = 0, err = 0, channel_no, i;
+	int err = 0, channel_no, i;
 	double temp_double = 0;
 	char string_temperature[12];
 	char **names;
@@ -34,7 +34,7 @@ void temperature_demo(void)
 
 	channel_no = temperature_get_nr_channels();
 	if (channel_no == 0) {
-		sprints("Error - no channels configured");
+		sprints("Error - no channels configured\r\n");
 		return;
 	}
 	names = (char **) malloc (sizeof(char*) * channel_no);
@@ -46,20 +46,20 @@ void temperature_demo(void)
 	for(i = 0; i < channel_no; i++) {
 		tc[i] = temperature_get_channel_by_name(names[i]);
 		if (tc[i] == NULL) {
-			sprints("Could not find channel <%s>", names[i]);
+			sprints("Could not find channel <%s>\r\n", names[i]);
 		}
 	}
 
 	for(i = 0; i < channel_no; i++) {
-		err = temperature_read(tc[i], &temp_int);
+		err = temperature_read(tc[i], 0);
 		if (err != 0) {
-			sprints("channel %s: error (%d) while temperature_read", tc[i]->name, err);
+			sprints("channel %s: error (%d) while temperature_read\r\n", tc[i]->name, err);
 			continue;
 		}
-		temp_double = (double)temp_int/(double)tc[i]->result_multiplier;
+		temp_double = (double)tc[i]->temp_raw/(double)tc[i]->result_multiplier;
 
 		dtostrf(temp_double, 2, 4, string_temperature);
-		sprints("channel %s: temperature: %s C", tc[i]->name, string_temperature);
+		sprints("channel %s: temperature: %s C\r\n", tc[i]->name, string_temperature);
 	}
 	free(tc);
 	free(names);

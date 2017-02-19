@@ -18,31 +18,37 @@
 /* Sensor channels configuration */
 struct temperature_channel channels[] = {
 	{
-	.name = "t1",
-	.sensor = temperature_sensor_ds18b20,
-	.result_multiplier = DS18B20_MUL,
-	.ds18b20_port = &PORTD,
-	.ds18b20_direction = &DDRD,
-	.ds18b20_portin = &PIND,
-	.pin_mask = 1 << 6
-	},
-	{
-	.name = "t2",
-	.sensor = temperature_sensor_ds18b20,
-	.result_multiplier = DS18B20_MUL,
-	.ds18b20_port = &PORTD,
-	.ds18b20_direction = &DDRD,
-	.ds18b20_portin = &PIND,
-	.pin_mask = 1 << 5
-	},
-	{
-	.name = "t3",
-	.sensor = temperature_sensor_ds18b20,
-	.result_multiplier = DS18B20_MUL,
-	.ds18b20_port = &PORTD,
-	.ds18b20_direction = &DDRD,
-	.ds18b20_portin = &PIND,
-	.pin_mask = 1 << 4
-	},
+		.name = "t1",
+		.sensor = temperature_sensor_ds18b20,
+		.result_multiplier = DS18B20_MUL,
+		.port = &PORTD,
+		.direction = &DDRD,
+		.portin = &PIND,
+		.pin_mask = 1 << 6,
+		.temp_raw = 0,
+		.temp_c = 0
+	}
+	// {
+	// 	.name = "t2",
+	// 	.sensor = temperature_sensor_ds18b20,
+	// 	.result_multiplier = DS18B20_MUL,
+	// 	.ds18b20_port = &PORTD,
+	// 	.ds18b20_direction = &DDRD,
+	// 	.ds18b20_portin = &PIND,
+	// 	.pin_mask = 1 << 5,
+	// 	.temp_raw = 0,
+	// 	.temp_c = 0
+	// },
+	// {
+	// 	.name = "t3",
+	// 	.sensor = temperature_sensor_ds18b20,
+	// 	.result_multiplier = DS18B20_MUL,
+	// 	.ds18b20_port = &PORTD,
+	// 	.ds18b20_direction = &DDRD,
+	// 	.ds18b20_portin = &PIND,
+	// 	.pin_mask = 1 << 4,
+	// 	.temp_raw = 0,
+	// 	.temp_c = 0
+	// },
 };
 #endif

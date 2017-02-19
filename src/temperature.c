@@ -16,15 +16,11 @@
 
 #define ARRAYSIZE(arr) (sizeof(arr) / sizeof(arr[0]))
 
-static int temperature_read_ds18b20(volatile uint8_t *ds18b20_port,
-		  volatile uint8_t *ds18b20_direction,
-		  volatile uint8_t *ds18b20_portin,
-		  uint8_t pin_mask, int16_t *temp)
+static int16_t temperature_read_ds18b20(struct temperature_channel *tc)
 {
-	int temp_int = 0, err = 0;
+	int16_t err = 0;
 
-	err = ds18b20convert(ds18b20_port, ds18b20_direction,
-			     ds18b20_portin, pin_mask, NULL);
+	err = ds18b20convert(tc->port, tc->direction, tc->portin, tc->pin_mask, NULL);
 	if (err != 0)
 		return err;
 
@@ -32,32 +28,43 @@ static int temperature_read_ds18b20(volatile uint8_t *ds18b20_port,
 	 * can last up to 750 ms */
 	_delay_ms(1000);
 
-	err = ds18b20read(ds18b20_port, ds18b20_direction,
-			  ds18b20_portin, pin_mask, NULL, &temp_int);
+	err = ds18b20read(tc->port, tc->direction, tc->portin, tc->pin_mask, NULL, &(tc->temp_raw));
 	if (err != 0)
 		return err;
-
-	*temp = temp_int;
 
 	return err;
 }
 
-int16_t temperature_read(struct temperature_channel *tc, int16_t *temperature)
+static int16_t temperature_read_ds18b20_async(struct temperature_channel *tc)
 {
-	int16_t err = 0, temp = 0;
-	*temperature = temp;
+	int16_t err = 0;
+
+	// get last reading
+	err = ds18b20read(tc->port, tc->direction, tc->portin, tc->pin_mask, NULL, &(tc->temp_raw));
+	if (err != 0)
+		return err;
+
+	// initiate new read
+	err = ds18b20convert(tc->port, tc->direction, tc->portin, tc->pin_mask, NULL);
+	if (err != 0)
+		return err;
+
+	return err;
+}
+
+int16_t temperature_read(struct temperature_channel *tc, uint8_t async)
+{
+	int16_t err = 0;
 
 	switch (tc->sensor) {
-	case temperature_sensor_ds18b20:
-		err = temperature_read_ds18b20(tc->ds18b20_port,
-					       tc->ds18b20_direction,
-					       tc->ds18b20_portin,
-					       tc->pin_mask,
-					       &temp);
-		*temperature = temp;
-		break;
-	default:
-		err = TEMPERATURE_UNKNOWN_SENSOR_TYPE;
+		case temperature_sensor_ds18b20:
+			if (async)
+				err = temperature_read_ds18b20_async(tc);
+			else
+				err = temperature_read_ds18b20(tc);
+			break;
+		default:
+			err = TEMPERATURE_UNKNOWN_SENSOR_TYPE;
 	}
 
 	return err;
@@ -65,7 +72,7 @@ int16_t temperature_read(struct temperature_channel *tc, int16_t *temperature)
 
 struct temperature_channel *temperature_get_channel_by_name(const char *name)
 {
-	int i;
+	int16_t i;
 
 	for(i = 0;i < ARRAYSIZE(channels);i++) {
 		if (strcmp(channels[i].name, name) == 0)
@@ -75,14 +82,14 @@ struct temperature_channel *temperature_get_channel_by_name(const char *name)
 	return NULL;
 }
 
-void temperature_get_all_channel_names(int *size, char *names[])
+void temperature_get_all_channel_names(int16_t *size, char *names[])
 {
 	for(*size = 0;*size < ARRAYSIZE(channels);(*size)++) {
 		names[*size] = channels[*size].name;
 	}
 }
 
-int temperature_get_nr_channels(void)
+int16_t temperature_get_nr_channels(void)
 {
 	return ARRAYSIZE(channels);
 }

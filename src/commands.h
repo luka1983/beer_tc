@@ -5,12 +5,13 @@
 #define DEC_PLCS 3
 #define DEC_FRM "%03ld"
 
-// enum memebers correspond to command indexes in commands array
+// enum members correspond to command indexes in commands array
 typedef enum {
 	GetTs = 0,	// read set temperature
 	SetTs,		// write set temperature
 	GetT1,
-	GetT2
+	GetT2,
+	GetId
 } Cname;
 
 void set_command_handler(Cname cname, void* fp);
