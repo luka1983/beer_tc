@@ -143,8 +143,8 @@ Set commands come in following form.
 
 If execution is successful, command returns _ok_. If not the command fail reason string is returned.
 
-### Command list
-_Get_ command is supported for all listed objects while only some can be updated with _set_ command.
+### Command objects
+While _get_ command is supported for all listed objects, only some can be updated with _set_ command.
 
 | object | type      | r/w | value                                            |
 |:------:|-----------|-----|--------------------------------------------------|
