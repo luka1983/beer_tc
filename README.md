@@ -10,6 +10,14 @@ reading will be possible via i2c lcd screen.
 Although sharing similar system architecture to [brew pi](https://github.com/BrewPi/), this project is
 completely independent and created from scratch.
 
+Until all hardware elements are in place, Atmega will be controlled with raspberry pi via serial interface
+
+## Directory Structure
+
+* web_server - Contains sources for web server and services running on it
+* rpi - Contains sources of the raspberry pi
+* src - Contains sources for the AVR
+
 ## Board documentation
 
 Board documentation can be found here: https://www.arduino.cc/en/Main/arduinoBoardProMini
@@ -17,6 +25,43 @@ Board documentation can be found here: https://www.arduino.cc/en/Main/arduinoBoa
 Here is also direct link to pdf schematics: https://www.arduino.cc/en/uploads/Main/Arduino-Pro-Mini-schematic.pdf
 
 ## Installation
+
+### Web Server
+
+Installing SW on web server goes down to:
+
+ - installing web page
+ - installing handler for messages
+
+To install web page, copy server_software/web_server contents into /var/www/html/beer to your favourite server.
+
+To install handler for messages, copy server_software/apps/beermon_handler.py to server and try to run it.
+
+It is possible you'll need some additional SW. To install necessary SW, execute (at least):
+
+```
+sudo apt-get update
+sudo apt-get install python python3 mosquitto mosquitto-clients python-mosquitto python3-pip python-pip -y
+sudo pip3 install paho-mqtt
+sudo pip2 install paho-mqtt
+```
+
+After this, make sure your firewall is configured to receive on 1883
+
+Once beermon_handler.py works, you can proceed with service installation. Copy beermon.service:
+
+```
+sudo cp beermon.service /etc/systemd/system/
+sudo systemctl enable beermon.service
+sudo systemctl start beermon
+```
+
+### RPi Software
+
+RPi part is installed by executing rpi/beermon-rpi.py on rpi startup. For detailed instructions, check instructions within rpi sw directory.
+
+## AVR Toolchain
+
 These instruction assume that either USBasp or buspirate AVR programmer with avrdude are used for device programming.
 
 ### Windows
@@ -53,11 +98,31 @@ sudo apt-get install avr-libc avrdude binutils-avr gcc-avr srecord
 Clone the repo, build the sources with _make_, and push _hex_ file
 to board with following command.
 
-usbasp:
-       $ avrdude -c usbasp -p m328p -u -U flash:w:beer_tc.hex
+### usbasp
 
-buspirate:
-       $ sudo avrdude -c buspirate -P /dev/ttyUSB2 -p m328p -u -U flash:w:beer_tc.hex
+```
+$ avrdude -c usbasp -p m328p -u -U flash:w:beer_tc.hex
+```
+
+### buspirate:
+
+Before any operations, learn port of the buspirate and set it:
+
+```
+port=/dev/ttyUSB0
+```
+
+To program device, execute:
+
+```
+sudo avrdude -c buspirate -P $port -p m328p -u -U flash:w:bin/beer_tc.hex
+```
+
+To power atmega from buspirate, execute:
+
+```
+echo "m 2 " > $port;echo "W" > $port
+```
 
 ## Command set
 When beer_tc is running on AVR board, the following commands can be issued via serial interface. all

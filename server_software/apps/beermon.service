@@ -1,0 +1,14 @@
+[Unit]
+Description=Service for monitoring and processing messages from beermon sensors
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/home/admin/git/beer_tc/server_software/apps/beermon_handler.py
+Restart=always
+
+StandardOutput=syslog
+SyslogIdentifier=beermon
+
+[Install]
+WantedBy=multi-user.target

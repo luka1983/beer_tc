@@ -1,0 +1,10 @@
+.text-blue-big {
+	color: #006699;
+	font-size: 18px;
+}
+.text-monospace {
+	color: #000000;
+	font-size: 18px;
+	font-family: monospace;
+}
+
