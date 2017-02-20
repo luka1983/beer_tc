@@ -218,23 +218,28 @@ def discover_controller():
     for i in range(0, max_retries):
         for comport in ports:
             print("[%d] probing %s" %(i, comport.device))
-            with serial.Serial(comport.device, BAUD_RATE, timeout=2, write_timeout=2) as ser:
-                command = "get id\n"
-                try:
-                    ser.write(command.encode())
-                except Exception as err:
-                    print("Got %r while writing command to serial port" %(err,))
-                    continue
-                try:
-                    line = ser.readline()
-                except Exception as err:
-                    print("Got %r while reading command output from serial port" %(err,))
-                    continue
-            controller_id = line.decode(encoding="utf-8", errors="ignore")
-            print("[%d] %s: response to 'get id': '%s'" %(i, comport.device, controller_id))
-            if check_sensor_id(controller_id):
-                print("[%d] %s: found controller, id = %s" %(i, comport.device, controller_id))
-                return comport.device
+            try:
+                with serial.Serial(comport.device, BAUD_RATE, timeout=2, write_timeout=2) as ser:
+                    command = "get id\n"
+                    try:
+                        ser.write(command.encode())
+                    except Exception as err:
+                        print("Got %r while writing command to serial port" %(err,))
+                        continue
+                    try:
+                        line = ser.readline()
+                    except Exception as err:
+                        print("Got %r while reading command output from serial port" %(err,))
+                        continue
+                controller_id = line.decode(encoding="utf-8", errors="ignore")
+                print("[%d] %s: response to 'get id': '%s'" %(i, comport.device, controller_id))
+                if check_sensor_id(controller_id):
+                    print("[%d] %s: found controller, id = %s" %(i, comport.device, controller_id))
+                    return comport.device
+            except Exception as err:
+                print("[%d] While opening serial port %s, %r occured" %(i, comport, err))
+                # Give time to system to settle down, e.g. udev rules might still be firing
+                time.sleep(5)
 
     return None
 
