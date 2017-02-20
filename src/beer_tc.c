@@ -11,7 +11,7 @@
 #include "demo.h"
 #endif
 
-#define BOARD_ID 1
+#define BOARD_ID 123456
 
 uint32_t get_id() {
 	return BOARD_ID;
