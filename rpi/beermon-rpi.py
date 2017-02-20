@@ -59,6 +59,10 @@ def msg_queue_worker():
     print("Starting message queue worker, worker period = %d, backoff = %d"
             %(msg_worker_period, message_backoff_tmo))
 
+    syslog.syslog(syslog.LOG_INFO, "Starting message queue worker, worker period = %d, backoff = %d"
+            %(msg_worker_period, message_backoff_tmo))
+
+
     while True:
         try:
             message = message_queue.popleft()
@@ -69,10 +73,12 @@ def msg_queue_worker():
 
         if not isinstance(message[0], str) or not isinstance(message[1], str):
             print("message_worker: Found invalid message in queue " + str(message))
+            syslog.syslog(syslog.LOG_INFO, "message_worker: Found invalid message in queue " + str(message))
             time.sleep(msg_worker_period)
             continue
 
         print("message_worker: Found message in the queue, sending")
+        syslog.syslog(syslog.LOG_INFO, "message_worker: Found message in the queue, sending")
 
         retval = send_message_to_server(message[1], message[0], 0)
         if retval != 0:
@@ -93,12 +99,15 @@ If message fails to be sent, it will be queued for later sending
 '''
 def send_message_to_server(message, topic, queue=1):
     print("sending message: [" + topic + "]" + message)
+    syslog.syslog(syslog.LOG_INFO, "sending message: [" + topic + "]" + message)
     try:
         publish.single(topic, message, hostname=MQTT_HOST, port=MQTT_HOST_PORT, qos=1)
     except Exception as err:
         print("Exception %r while sending message {%s}, queue = %d" %(err, "[" + topic + "]" + message, queue))
+        syslog.syslog(syslog.LOG_INFO, "Exception %r while sending message {%s}, queue = %d" %(err, "[" + topic + "]" + message, queue))
         if queue == 1:
             print("Appending previous message to the message queue")
+            syslog.syslog(syslog.LOG_INFO, "Appending previous message to the message queue")
             message_queue.append([topic, message])
         return -1
     return 0
@@ -106,10 +115,12 @@ def send_message_to_server(message, topic, queue=1):
 
 def send_message_local(message, topic):
     print("sending local message: [" + topic + "]" + message)
+    syslog.syslog(syslog.LOG_INFO, "sending local message: [" + topic + "]" + message)
     try:
         publish.single(topic, message, hostname=MQTT_LOCAL_HOST, port=MQTT_LOCAL_PORT, qos=1, retain=True)
     except Exception as err:
         print("Exception %r while sending message {%s}" %(err, "[" + topic + "]" + message))
+        syslog.syslog(syslog.LOG_INFO, "Exception %r while sending message {%s}" %(err, "[" + topic + "]" + message))
         return -1
     return 0
 
@@ -127,11 +138,13 @@ def send_over_serial_read_result(command):
             ser.write(command.encode())
         except Exception as err:
             print("Got %r while writing command '%s' to serial port" %(err,command))
+            syslog.syslog(syslog.LOG_INFO, "Got %r while writing command '%s' to serial port" %(err,command))
             return "NOK"
         try:
             line = ser.readline()
         except Exception as err:
             print("Got %r while reading command '%s' output from serial port" %(err,command))
+            syslog.syslog(syslog.LOG_INFO, "Got %r while reading command '%s' output from serial port" %(err,command))
             return "NOK"
 
         return line.decode(encoding="utf-8", errors="ignore")
@@ -190,6 +203,7 @@ def check_sensor_id(sensor_id):
 
 def process_message(topic, text):
     print("Processing message: [%s] %s" %(topic, text))
+    syslog.syslog(syslog.LOG_INFO, "Processing message: [%s] %s" %(topic, text))
     variable = topic.split('/')[-1]
     value = text
     if variable == "ts":
@@ -199,10 +213,13 @@ def process_message(topic, text):
         else:
             ret = send_over_serial_read_result("set ts " + value) 
             print("Setting %s with %s, retval = %s" %(variable, value, ret))
+            syslog.syslog(syslog.LOG_INFO, "Setting %s with %s, retval = %s" %(variable, value, ret))
 
 def beermon_handler_on_connect(client, userdata, rc):
     print("Connected with result code "+str(rc))
+    syslog.syslog(syslog.LOG_INFO, "Connected with result code "+str(rc))
     print("Subscribing to " + CONFIG_TOPIC + "/# topic")
+    syslog.syslog(syslog.LOG_INFO, "Subscribing to " + CONFIG_TOPIC + "/# topic")
     client.subscribe(CONFIG_TOPIC + "/#")
 
 def beermon_handler_on_message(client, userdata, msg):
@@ -218,6 +235,7 @@ def discover_controller():
     for i in range(0, max_retries):
         for comport in ports:
             print("[%d] probing %s" %(i, comport.device))
+            syslog.syslog(syslog.LOG_INFO, "[%d] probing %s" %(i, comport.device))
             try:
                 with serial.Serial(comport.device, BAUD_RATE, timeout=2, write_timeout=2) as ser:
                     command = "get id\n"
@@ -225,19 +243,24 @@ def discover_controller():
                         ser.write(command.encode())
                     except Exception as err:
                         print("Got %r while writing command to serial port" %(err,))
+                        syslog.syslog(syslog.LOG_INFO, "Got %r while writing command to serial port" %(err,))
                         continue
                     try:
                         line = ser.readline()
                     except Exception as err:
                         print("Got %r while reading command output from serial port" %(err,))
+                        syslog.syslog(syslog.LOG_INFO, "Got %r while reading command output from serial port" %(err,))
                         continue
                 controller_id = line.decode(encoding="utf-8", errors="ignore")
                 print("[%d] %s: response to 'get id': '%s'" %(i, comport.device, controller_id))
+                syslog.syslog(syslog.LOG_INFO, "[%d] %s: response to 'get id': '%s'" %(i, comport.device, controller_id))
                 if check_sensor_id(controller_id):
                     print("[%d] %s: found controller, id = %s" %(i, comport.device, controller_id))
+                    syslog.syslog(syslog.LOG_INFO, "[%d] %s: found controller, id = %s" %(i, comport.device, controller_id))
                     return comport.device
             except Exception as err:
                 print("[%d] While opening serial port %s, %r occured" %(i, comport, err))
+                syslog.syslog(syslog.LOG_INFO, "[%d] While opening serial port %s, %r occured" %(i, comport, err))
                 # Give time to system to settle down, e.g. udev rules might still be firing
                 time.sleep(5)
 
@@ -267,6 +290,7 @@ if __name__ == "__main__":
     debug = False
 
     print("Starting %s, debug is %s" %(os.path.basename(__file__), str(debug)))
+    syslog.syslog(syslog.LOG_INFO, "Starting %s, debug is %s" %(os.path.basename(__file__), str(debug)))
 
     lock = threading.Lock()
 
@@ -274,16 +298,20 @@ if __name__ == "__main__":
     #port = "/dev/ttyUSB1"
     if port is None:
         print("Failed to discover controller")
+        syslog.syslog(syslog.LOG_INFO, "Failed to discover controller")
         alarm("tctr", "Failed to discover controller")
         print("Exiting due to previous errors")
+        syslog.syslog(syslog.LOG_INFO, "Exiting due to previous errors")
         sys.exit(1)
 
     ser = serial.Serial(port, BAUD_RATE, timeout=1, write_timeout=1)
 
     if not set_initial_ts():
         print("Failed to set inital ts")
+        syslog.syslog(syslog.LOG_INFO, "Failed to set inital ts")
         alarm("tctr", "FAILED to read sensor %s, errors in row %d" %(sensor, sens_errors[sensor]))
         print("Exiting due to previous errors")
+        syslog.syslog(syslog.LOG_INFO, "Exiting due to previous errors")
         sys.exit(1)
 
     # Global variable for mqtt unsent message queue
@@ -311,14 +339,18 @@ if __name__ == "__main__":
             except ValueError as err:
                 sens_errors[sensor] = sens_errors[sensor] + 1
                 print("FAILED to read sensor %s, errors %d" %(sensor, sens_errors[sensor]))
+                syslog.syslog(syslog.LOG_INFO, "FAILED to read sensor %s, errors %d" %(sensor, sens_errors[sensor]))
                 alarm("tctr", "FAILED to read sensor %s, errors %d" %(sensor, sens_errors[sensor]))
                 print("Exiting due to previous errors")
+                syslog.syslog(syslog.LOG_INFO, "Exiting due to previous errors")
                 sys.exit(1)
             date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             message = str(date) + "," + value
             print("Sending %s: %s" %(sensor, message))
+            syslog.syslog(syslog.LOG_INFO, "Sending %s: %s" %(sensor, message))
             if debug:
                 print("Debug - not sending")
+                syslog.syslog(syslog.LOG_INFO, "Debug - not sending")
             else:
                 send_message_to_server(message, "beermon/" + sensor)
             time.sleep(1)
