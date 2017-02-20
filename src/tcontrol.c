@@ -20,13 +20,13 @@ int32_t get_t1() {
 }
 
 int32_t get_t2() {
-	return controller.t1->temp_c;
+	return controller.t2->temp_c;
 }
 
 void init_control_loop(uint32_t tc) {
 	// read temperature channel configuration
 	controller.t1 = temperature_get_channel_by_name("t1");
-	controller.t2 = temperature_get_channel_by_name("t1");
+	controller.t2 = temperature_get_channel_by_name("t2");
 
 	// command interface initialization
 	set_command_handler(GetTs, &get_ts);
@@ -61,5 +61,7 @@ ISR(TIMER1_COMPA_vect) {
 	// temperature control code here
 	PORTB ^= 0x20;
 	temperature_read(controller.t1, 1);
+	temperature_read(controller.t2, 1);
 	controller.t1->temp_c = DEC_DIV * controller.t1->temp_raw / controller.t1->result_multiplier;
+	controller.t2->temp_c = DEC_DIV * controller.t2->temp_raw / controller.t2->result_multiplier;
 }
