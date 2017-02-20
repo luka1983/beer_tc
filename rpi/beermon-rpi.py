@@ -148,23 +148,36 @@ def is_float(s):
     return True
 
 '''
-Functioe reads value from sensor via INTERFACE
-Function returns string with value, or NOK in
-case sensor could not be read
+Function reads sensor from global interface and
+returns string formatted as decimal value. Function
+throws ValueError in case result obtained is not
+decimal value.
+Function will try to read max_attempts prior returning
+failure.
 '''
-def read_sensor(sensor):
-    value = send_over_serial_read_result("get " + sensor) 
-    if is_float(value):
-        return value
-    else:
-        return "NOK"
+def read_sensor(sensor, max_attempts = max_retries):
+    for i in range(0, max_retries):
+        value = send_over_serial_read_result("get " + sensor) 
+        if is_float(value):
+            return value
+        else:
+            continue
+    raise ValueError("Response is not decimal, communication FAILED!")
 
 '''
-Reads sensor's id
+Function writes command via global interface to the controller
+and returns True if write was OK, or false if it wasnt.
+Function will try to write max_attempts prior returning
+failure.
 '''
-def read_sensor_id():
-    id = send_over_serial_read_result("get id")
-    return id
+def write_controller(command, max_attempts = max_retries):
+    for i in range(0, max_retries):
+        response = send_over_serial_read_result(command) 
+        if response == "ok":
+            return True
+        else:
+            continue
+    return False
 
 '''
 Function checks whether sensor is supported by the script
@@ -224,6 +237,9 @@ def discover_controller():
 
     return None
 
+'''
+function raises alarm
+'''
 def alarm(topic, message):
     publish.single("alarm/" + topic, message)
 
@@ -233,12 +249,12 @@ This should be called prior subscribing to the topic
 for setting/getting values for ts due to reatin used there.
 '''
 def set_initial_ts():
-    for i in range(0, max_retries):
+    try:
         value = read_sensor("ts")
-        if value != "NOK":
-            send_message_local(value, CONFIG_TOPIC + "/ts")
-            return
-    print("Failed to set inital ts!")
+    except ValueError as err:
+        return False
+    send_message_local(value, CONFIG_TOPIC + "/ts")
+    return True
 
 if __name__ == "__main__":
 
@@ -257,7 +273,10 @@ if __name__ == "__main__":
 
     ser = serial.Serial(port, BAUD_RATE, timeout=1, write_timeout=1)
 
-    set_initial_ts()
+    if not set_initial_ts():
+        print("Failed to set inital ts")
+        alarm("tctr", "FAILED to read sensor %s, errors in row %d" %(sensor, sens_errors[sensor]))
+        sys.exit(1)
 
     # Global variable for mqtt unsent message queue
     message_queue = deque(maxlen = 20000)
@@ -279,14 +298,12 @@ if __name__ == "__main__":
 
     while True:
         for sensor in sensors:
-            for i in range(0, max_retries):
+            try:
                 value = read_sensor(sensor)
-                if value != "NOK":
-                    break
+            except ValueError as err:
                 sens_errors[sensor] = sens_errors[sensor] + 1
-            if value == "NOK":
-                print("FAILED to read sensor %s, errors in row %d" %(sensor, sens_errors[sensor]))
-                alarm("tctr", "FAILED to read sensor %s, errors in row %d" %(sensor, sens_errors[sensor]))
+                print("FAILED to read sensor %s, errors %d" %(sensor, sens_errors[sensor]))
+                alarm("tctr", "FAILED to read sensor %s, errors %d" %(sensor, sens_errors[sensor]))
                 continue
             date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             message = str(date) + "," + value
