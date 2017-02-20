@@ -30,7 +30,7 @@ MQTT_LOCAL_HOST="localhost"
 MQTT_LOCAL_PORT=1883
 
 # Sensors read period, in seconds
-sensor_read_period = 5
+sensor_read_period = 120
 
 # Sensor list
 sensors = ['t1', 't2', 'ts']
