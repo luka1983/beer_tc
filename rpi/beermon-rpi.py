@@ -41,7 +41,7 @@ CONFIG_TOPIC="beermon_config"
 
 # Minimum and maximum temperature values
 MIN_TEMP=5
-MAX_TEMP=25
+MAX_TEMP=30
 
 # Baud rate of the controller
 BAUD_RATE=19200
@@ -161,6 +161,7 @@ def read_sensor(sensor, max_attempts = max_retries):
         if is_float(value):
             return value
         else:
+            time.sleep(1)
             continue
     raise ValueError("Response is not decimal, communication FAILED!")
 
@@ -315,4 +316,5 @@ if __name__ == "__main__":
                 print("Debug - not sending")
             else:
                 send_message_to_server(message, "beermon/" + sensor)
+            time.sleep(1)
         time.sleep(sensor_read_period)
