@@ -269,6 +269,7 @@ if __name__ == "__main__":
     if port is None:
         print("Failed to discover controller")
         alarm("tctr", "Failed to discover controller")
+        print("Exiting due to previous errors")
         sys.exit(1)
 
     ser = serial.Serial(port, BAUD_RATE, timeout=1, write_timeout=1)
@@ -276,6 +277,7 @@ if __name__ == "__main__":
     if not set_initial_ts():
         print("Failed to set inital ts")
         alarm("tctr", "FAILED to read sensor %s, errors in row %d" %(sensor, sens_errors[sensor]))
+        print("Exiting due to previous errors")
         sys.exit(1)
 
     # Global variable for mqtt unsent message queue
@@ -304,7 +306,8 @@ if __name__ == "__main__":
                 sens_errors[sensor] = sens_errors[sensor] + 1
                 print("FAILED to read sensor %s, errors %d" %(sensor, sens_errors[sensor]))
                 alarm("tctr", "FAILED to read sensor %s, errors %d" %(sensor, sens_errors[sensor]))
-                continue
+                print("Exiting due to previous errors")
+                sys.exit(1)
             date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             message = str(date) + "," + value
             print("Sending %s: %s" %(sensor, message))
