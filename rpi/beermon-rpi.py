@@ -18,6 +18,8 @@ import paho.mqtt.client as mqtt
 import paho.mqtt.publish as publish
 import stat
 from collections import deque
+import serial
+from serial.tools import list_ports
 
 # Remote mqtt broker address
 MQTT_HOST="52.28.77.176"
@@ -40,6 +42,9 @@ CONFIG_TOPIC="beermon_config"
 # Minimum and maximum temperature values
 MIN_TEMP=5
 MAX_TEMP=25
+
+# Baud rate of the controller
+BAUD_RATE=19200
 
 def msg_queue_worker():
     msg_worker_period = 30
@@ -102,6 +107,14 @@ def send_message_local(message, topic):
     return 0
 
 '''
+Function sends command over serial and reads
+back result. This function is thread safe
+'''
+def send_over_serial_read_result(command):
+    with lock:
+        print("Processing serial command " + command)
+
+'''
 Function reads value from sensor via INTERFACE
 This is obviously todo
 '''
@@ -138,11 +151,33 @@ def beermon_handler_on_message(client, userdata, msg):
     text = msg.payload.decode(encoding="utf-8", errors="ignore")
     process_message(msg.topic, text)
 
+'''
+Function iterates over all comports and tries to discover on which
+port is controller connected
+'''
+def discover_controller():
+    ports = list_ports.comports()
+    for comport in ports:
+        print("Found " + comport.device)
+        with serial.Serial(comport.device, BAUD_RATE, timeout=1, write_timeout=1) as ser:
+            ser.write(b'bla')
+            time.sleep(1);
+            #response = ser.readline()
+            #print("Got response %s on %s" %(response, comport.device))
+    return None
+
 if __name__ == "__main__":
 
     print("Starting " + os.path.basename(__file__))
 
+    lock = threading.Lock()
+
+    #send_over_serial_read_result("sample")
+
+    #port = discover_controller()
+
     debug = True
+    debug = False
 
     # Global variable for mqtt unsent message queue
     message_queue = deque(maxlen = 20000)
@@ -168,4 +203,6 @@ if __name__ == "__main__":
                 print("Debug - not sending")
             else:
                 send_message_to_server(message, "beermon/" + sensor)
+        message = str(date) + "," + "18.0";
+        send_message_to_server(message, "beermon/set")
         time.sleep(sensor_read_period)
