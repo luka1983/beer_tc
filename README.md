@@ -20,9 +20,9 @@ Until all hardware elements are in place, Atmega will be controlled with raspber
 
 ## Board documentation
 
-Board documentation can be found here: https://www.arduino.cc/en/Main/arduinoBoardProMini
+Board documentation can be found [here](https://www.arduino.cc/en/Main/arduinoBoardProMini).
 
-Here is also direct link to pdf schematics: https://www.arduino.cc/en/uploads/Main/Arduino-Pro-Mini-schematic.pdf
+Here is also direct link to [pdf schematics](https://www.arduino.cc/en/uploads/Main/Arduino-Pro-Mini-schematic.pdf).
 
 ## Installation
 
@@ -136,14 +136,23 @@ Get commands come in following form
 and the response is formated requested object type. The list of retrievable objects as well as belonging
 types are given in following table.
 
-| object | type      | values                                           |
-|:------:|-----------|--------------------------------------------------|
-| ts     | decimal   | controller set temperature                       |
-| tr     | decimal   | current temperature reading                      |
-| dt     | integer   | control loop discretization time (ms)            |
-| ct     | integer   | minimal output change interval duration (s)      |
-| un     | character | unit system in use, i for imperial, m for metric |
-| sv     | decimal   | software version                                 |
-
-
 ### Set commands
+Set commands come in following form.
+
+        set <object> <value>
+
+If execution is successful, command returns _ok_. If not the command fail reason string is returned.
+
+### Command objects
+While _get_ command is supported for all listed objects, only some can be updated with _set_ command.
+
+| object | type      | r/w | description                                      | status |
+|:------:|-----------|-----|--------------------------------------------------|--------|
+| ts     | decimal   | rw  | controller set temperature                       | a      |
+| t1     | decimal   | ro  | temperature reading for 1st sensor               | a      |
+| t2     | decimal   | ro  | temperature reading for 2nd sensor               | a      |
+| dt     | integer   | rw  | control loop discretization time (ms)            | n/a    |
+| ct     | integer   | rw  | minimal output change interval duration (s)      | n/a    |
+| un     | string    | rw  | unit system in use, i for imperial, m for metric | n/a    |
+| fw     | string    | ro  | firmware version                                 | n/a    |
+| id     | integer   | ro  | board id                                         | a      |

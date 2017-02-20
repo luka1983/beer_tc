@@ -2,7 +2,8 @@
 FCPU		= 16000000UL
 
 PRG			= beer_tc
-OBJS		= beer_tc.o tcontrol.o serial.o onewire.o ds18b20.o temperature.o
+
+OBJS		= beer_tc.o tcontrol.o serial.o onewire.o ds18b20.o temperature.o commands.o
 
 MCU_TARGET	= atmega328p
 
@@ -41,8 +42,11 @@ ds18b20.o: ds18b20.c
 temperature.o: temperature.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -c temperature.c
 
+commands.o: commands.c
+	$(CC) $(CFLAGS) $(LDFLAGS) -c commands.c
+
 clean:
-	rm -rf *.o $(PRG).elf $(PRG).hex *.bak 
+	rm -rf *.o $(PRG).elf $(PRG).hex *.bak
 	rm -rf *.map
 
 # Rules for building the .text rom images
