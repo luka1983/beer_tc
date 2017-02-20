@@ -260,9 +260,9 @@ function bodyOnLoad()
 	var line_labels = ["T1", "T2", "set"];
 	draw_graphs("temperature", temperature_inputs, line_labels, 'Temperature Sensors', "T [C]", true);
 
-	//var humidity_inputs = ["paprika_hum", "benjamin_hum" ];
-	//var line_labels = ["Paprika", "Benjamin", "FCTJ (AXM5516)", "FCTJ-AXM (Cores 0-3)", "FSPJ (K2)"];
-	//draw_graphs("vlaznost", humidity_inputs, line_labels, 'Vlaznost Zemlje', "Relativna vlaznost [%]", true);
+	var control_inputs = [ "co" ];
+	var line_labels = ["Regulator output"];
+	draw_graphs("control", control_inputs, line_labels, 'Control', "Control", true);
 }
 
 </script>
@@ -348,14 +348,14 @@ function bodyOnLoad()
 			<div id="temperature"></div>
 		</div>
 		<div class="row">
-			<div id="vlaznost"></div>
+			<div id="control"></div>
 		</div>
 		<div class="row">
 			<div class="col-sm-12">
 				<div id="temperature-table"></div>
 			</div>
 			<div class="col-sm-12">
-				<div id="vlaznost-table"></div>
+				<div id="control-table"></div>
 			</div>
 		</div>
 		<hr>
