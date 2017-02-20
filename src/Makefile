@@ -3,7 +3,7 @@ FCPU		= 16000000UL
 
 PRG			= beer_tc
 
-OBJS		= beer_tc.o tcontrol.o serial.o onewire.o ds18b20.o temperature.o commands.o
+OBJS		= beer_tc.o tcontrol.o serial.o onewire.o ds18b20.o temperature.o commands.o gpio.o
 
 MCU_TARGET	= atmega328p
 
@@ -44,6 +44,9 @@ temperature.o: temperature.c
 
 commands.o: commands.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -c commands.c
+
+gpio.o: gpio.c
+	$(CC) $(CFLAGS) $(LDFLAGS) -c gpio.c
 
 clean:
 	rm -rf *.o $(PRG).elf $(PRG).hex *.bak

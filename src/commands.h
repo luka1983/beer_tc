@@ -11,7 +11,8 @@ typedef enum {
 	SetTs,		// write set temperature
 	GetT1,
 	GetT2,
-	GetId
+	GetId,
+	GetCo
 } Cname;
 
 void set_command_handler(Cname cname, void* fp);

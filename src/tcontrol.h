@@ -1,9 +1,16 @@
 #include "temperature.h"
+#include "gpio.h"
+
+typedef enum { Stopped, Started, Err } TCState;
 
 struct TempController {
 	int32_t ts;							// control loop set temperature
+	int32_t hl;							// hysteresis lower threshold
+	int32_t hu;							// hysteresis upper threshold
 	struct temperature_channel* t1;		// main temperature sensor
 	struct temperature_channel* t2;		// secondary temperature sensor
+	TCState state;
+	struct Pin out;
 };
 
 // init control loop, requires tc in ms

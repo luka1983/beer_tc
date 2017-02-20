@@ -1,5 +1,6 @@
 # Beer Temperature Control
-This project uses Arduino Pro Mini (Atmega328P) board. However, all sources are provided in AVR native C.
+This project uses Arduino Pro Mini ([Atmega328P](http://www.atmel.com/Images/Atmel-42735-8-bit-AVR-Microcontroller-ATmega328-328P_Datasheet.pdf))
+board. However, all sources are provided in AVR native C.
 
 The goal is to provide accurate fermentation chamber temperature control (within 0.1 degree celsius). Similar
 to brew pi, the complete system contains AVR microcontroller board running control algorithm. The SW on board
