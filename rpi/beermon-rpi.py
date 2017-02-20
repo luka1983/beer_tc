@@ -30,10 +30,10 @@ MQTT_LOCAL_HOST="localhost"
 MQTT_LOCAL_PORT=1883
 
 # Sensors read period, in seconds
-sensor_read_period = 300
+sensor_read_period = 5
 
 # Sensor list
-sensors = ['t1', 't2']
+sensors = ['t1', 't2', 'ts']
 
 # configuration topic name - this is the name of the topic for
 # configuration values. e.g. CONFIG_TOPIC/ts
@@ -45,6 +45,9 @@ MAX_TEMP=25
 
 # Baud rate of the controller
 BAUD_RATE=19200
+
+# Supported board ids
+supported_sensors_id = ['123456', 'tca']
 
 def msg_queue_worker():
     msg_worker_period = 30
@@ -109,27 +112,64 @@ def send_message_local(message, topic):
 '''
 Function sends command over serial and reads
 back result. This function is thread safe
+
+Function returns string with response or 'NOK' if
+execution did not finished correctly
 '''
 def send_over_serial_read_result(command):
     with lock:
-        print("Processing serial command " + command)
+        print("Processing serial command '%s'" %(command,))
+        command = command + "\n"
+        try:
+            ser.write(command.encode())
+        except Exception as err:
+            print("Got %r while writing command to serial port" %(err,))
+            return "NOK"
+        try:
+            line = ser.readline()
+        except Exception as err:
+            print("Got %r while reading command output from serial port" %(err,))
+            return "NOK"
+
+        return line.decode(encoding="utf-8", errors="ignore")
 
 '''
-Function reads value from sensor via INTERFACE
-This is obviously todo
+Function returns true if string s is representation
+of float
+'''
+def is_float(s):
+    try:
+        float(s)
+    except ValueError:
+        return False
+    return True
+
+'''
+Functioe reads value from sensor via INTERFACE
+Function returns string with value, or NOK in
+case sensor could not be read
 '''
 def read_sensor(sensor):
-    value = random.uniform(15, 25)
-    f_value = "{0:0.4f}".format(value)
-    return f_value
+    value = send_over_serial_read_result("get " + sensor) 
+    if is_float(value):
+        return value
+    else:
+        return "NOK"
 
 '''
-Function gets current ts from controller
+Reads sensor's id
 '''
-def read_current_ts():
-    value = random.uniform(15, 25)
-    f_value = "{0:0.4f}".format(value)
-    return f_value
+def read_sensor_id():
+    id = send_over_serial_read_result("get id")
+    return id
+
+'''
+Function checks whether sensor is supported by the script
+'''
+def check_sensor_id(sensor_id):
+    if sensor_id in supported_sensors_id:
+        return True
+    return False
 
 def process_message(topic, text):
     print("Processing message: [%s] %s" %(topic, text))
@@ -137,7 +177,7 @@ def process_message(topic, text):
     value = text
     if variable == "ts":
         if value == "?":
-            curr_ts = read_current_ts()
+            curr_ts = read_sensor("ts")
             send_message_local(curr_ts, CONFIG_TOPIC + "/ts")
         else:
             print("Setting %s with %s" %(variable, value))
@@ -157,13 +197,16 @@ port is controller connected
 '''
 def discover_controller():
     ports = list_ports.comports()
-    for comport in ports:
-        print("Found " + comport.device)
-        with serial.Serial(comport.device, BAUD_RATE, timeout=1, write_timeout=1) as ser:
-            ser.write(b'bla')
-            time.sleep(1);
-            #response = ser.readline()
-            #print("Got response %s on %s" %(response, comport.device))
+    # How many times to go over all ports to discover board
+    max_loops=3
+    for i in range(0, max_loops):
+        for comport in ports:
+            print("[%d] probing %s" %(i, comport.device))
+            with serial.Serial(comport.device, BAUD_RATE, timeout=1, write_timeout=1) as ser:
+                ser.write(b'bla')
+                time.sleep(1);
+                #response = ser.readline()
+                #print("Got response %s on %s" %(response, comport.device))
     return None
 
 if __name__ == "__main__":
@@ -172,12 +215,22 @@ if __name__ == "__main__":
 
     lock = threading.Lock()
 
-    #send_over_serial_read_result("sample")
-
     #port = discover_controller()
+    port = "/dev/ttyUSB1"
+
+    ser = serial.Serial(port, BAUD_RATE, timeout=1, write_timeout=1)
+
+    sensor_id = read_sensor_id()
+    print("Respononse: " + sensor_id)
+    if not check_sensor_id(sensor_id):
+        print("Sensor is not supported!")
+    else:
+        print("Sensor is supported")
+
+    temp = read_sensor("t1")
+    print("Sensor t1: " + temp)
 
     debug = True
-    debug = False
 
     # Global variable for mqtt unsent message queue
     message_queue = deque(maxlen = 20000)
@@ -195,7 +248,10 @@ if __name__ == "__main__":
 
     while True:
         for sensor in sensors:
-            value = read_sensor(1)
+            value = read_sensor(sensor)
+            if value == "NOK":
+                print("FAILED to read sensor " + sensor)
+                continue
             date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             message = str(date) + "," + value
             print("Sending " + message)
@@ -203,6 +259,4 @@ if __name__ == "__main__":
                 print("Debug - not sending")
             else:
                 send_message_to_server(message, "beermon/" + sensor)
-        message = str(date) + "," + "18.0";
-        send_message_to_server(message, "beermon/set")
         time.sleep(sensor_read_period)
