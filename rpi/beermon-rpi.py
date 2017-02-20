@@ -49,6 +49,9 @@ BAUD_RATE=19200
 # Supported board ids
 supported_sensors_id = ['123456', 'tca']
 
+# Max retries to try to read controller
+max_retries = 3
+
 def msg_queue_worker():
     msg_worker_period = 30
     message_backoff_tmo = 5
@@ -100,6 +103,7 @@ def send_message_to_server(message, topic, queue=1):
         return -1
     return 0
 
+
 def send_message_local(message, topic):
     print("sending local message: [" + topic + "]" + message)
     try:
@@ -118,17 +122,16 @@ execution did not finished correctly
 '''
 def send_over_serial_read_result(command):
     with lock:
-        print("Processing serial command '%s'" %(command,))
         command = command + "\n"
         try:
             ser.write(command.encode())
         except Exception as err:
-            print("Got %r while writing command to serial port" %(err,))
+            print("Got %r while writing command '%s' to serial port" %(err,command))
             return "NOK"
         try:
             line = ser.readline()
         except Exception as err:
-            print("Got %r while reading command output from serial port" %(err,))
+            print("Got %r while reading command '%s' output from serial port" %(err,command))
             return "NOK"
 
         return line.decode(encoding="utf-8", errors="ignore")
@@ -180,7 +183,8 @@ def process_message(topic, text):
             curr_ts = read_sensor("ts")
             send_message_local(curr_ts, CONFIG_TOPIC + "/ts")
         else:
-            print("Setting %s with %s" %(variable, value))
+            ret = send_over_serial_read_result("set ts " + value) 
+            print("Setting %s with %s, retval = %s" %(variable, value, ret))
 
 def beermon_handler_on_connect(client, userdata, rc):
     print("Connected with result code "+str(rc))
@@ -197,40 +201,63 @@ port is controller connected
 '''
 def discover_controller():
     ports = list_ports.comports()
-    # How many times to go over all ports to discover board
-    max_loops=3
-    for i in range(0, max_loops):
+    for i in range(0, max_retries):
         for comport in ports:
             print("[%d] probing %s" %(i, comport.device))
-            with serial.Serial(comport.device, BAUD_RATE, timeout=1, write_timeout=1) as ser:
-                ser.write(b'bla')
-                time.sleep(1);
-                #response = ser.readline()
-                #print("Got response %s on %s" %(response, comport.device))
+            with serial.Serial(comport.device, BAUD_RATE, timeout=2, write_timeout=2) as ser:
+                command = "get id\n"
+                try:
+                    ser.write(command.encode())
+                except Exception as err:
+                    print("Got %r while writing command to serial port" %(err,))
+                    continue
+                try:
+                    line = ser.readline()
+                except Exception as err:
+                    print("Got %r while reading command output from serial port" %(err,))
+                    continue
+            controller_id = line.decode(encoding="utf-8", errors="ignore")
+            print("[%d] %s: response to 'get id': '%s'" %(i, comport.device, controller_id))
+            if check_sensor_id(controller_id):
+                print("[%d] %s: found controller, id = %s" %(i, comport.device, controller_id))
+                return comport.device
+
     return None
+
+def alarm(topic, message):
+    publish.single("alarm/" + topic, message)
+
+'''
+Function reads inital ts and publishes it.
+This should be called prior subscribing to the topic
+for setting/getting values for ts due to reatin used there.
+'''
+def set_initial_ts():
+    for i in range(0, max_retries):
+        value = read_sensor("ts")
+        if value != "NOK":
+            send_message_local(value, CONFIG_TOPIC + "/ts")
+            return
+    print("Failed to set inital ts!")
 
 if __name__ == "__main__":
 
-    print("Starting " + os.path.basename(__file__))
+    debug = True
+
+    print("Starting %s, debug is %s" %(os.path.basename(__file__), str(debug)))
 
     lock = threading.Lock()
 
-    #port = discover_controller()
-    port = "/dev/ttyUSB1"
+    port = discover_controller()
+    #port = "/dev/ttyUSB1"
+    if port is None:
+        print("Failed to discover controller")
+        alarm("tctr", "Failed to discover controller")
+        sys.exit(1)
 
     ser = serial.Serial(port, BAUD_RATE, timeout=1, write_timeout=1)
 
-    sensor_id = read_sensor_id()
-    print("Respononse: " + sensor_id)
-    if not check_sensor_id(sensor_id):
-        print("Sensor is not supported!")
-    else:
-        print("Sensor is supported")
-
-    temp = read_sensor("t1")
-    print("Sensor t1: " + temp)
-
-    debug = True
+    set_initial_ts()
 
     # Global variable for mqtt unsent message queue
     message_queue = deque(maxlen = 20000)
@@ -246,15 +273,24 @@ if __name__ == "__main__":
     beermon_handler.connect(MQTT_LOCAL_HOST, MQTT_LOCAL_PORT, 60)
     beermon_handler.loop_start()
 
+    sens_errors = dict()
+    for sensor in sensors:
+        sens_errors[sensor] = 0
+
     while True:
         for sensor in sensors:
-            value = read_sensor(sensor)
+            for i in range(0, max_retries):
+                value = read_sensor(sensor)
+                if value != "NOK":
+                    break
+                sens_errors[sensor] = sens_errors[sensor] + 1
             if value == "NOK":
-                print("FAILED to read sensor " + sensor)
+                print("FAILED to read sensor %s, errors in row %d" %(sensor, sens_errors[sensor]))
+                alarm("tctr", "FAILED to read sensor %s, errors in row %d" %(sensor, sens_errors[sensor]))
                 continue
             date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             message = str(date) + "," + value
-            print("Sending " + message)
+            print("Sending %s: %s" %(sensor, message))
             if debug:
                 print("Debug - not sending")
             else:
