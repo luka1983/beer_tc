@@ -258,7 +258,7 @@ def set_initial_ts():
 
 if __name__ == "__main__":
 
-    debug = True
+    debug = False
 
     print("Starting %s, debug is %s" %(os.path.basename(__file__), str(debug)))
 
