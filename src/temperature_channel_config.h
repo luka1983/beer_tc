@@ -27,7 +27,7 @@ struct temperature_channel channels[] = {
 		.pin_mask = 1 << 6,
 		.temp_raw = 0,
 		.temp_c = 0
-	}
+	},
 	{
 		.name = "t2",
 		.sensor = temperature_sensor_ds18b20,
