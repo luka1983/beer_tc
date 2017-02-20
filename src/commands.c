@@ -43,7 +43,7 @@ struct Command commands[] = {
 	{ .ctype = SetCmd, .otype = Decimal, .oname = Ts, .fp = NULL },
 	{ .ctype = GetCmd, .otype = Decimal, .oname = T1, .fp = NULL },
 	{ .ctype = GetCmd, .otype = Decimal, .oname = T2, .fp = NULL },
-	{ .ctype = GetCmd, .otype = Integer, .oname = Id, .fp = NULL },
+	{ .ctype = GetCmd, .otype = String, .oname = Id, .fp = NULL },
 	{ .ctype = GetCmd, .otype = Integer, .oname = Co, .fp = NULL }
 };
 
@@ -116,7 +116,7 @@ uint8_t str2num(const char* str, int32_t* num, OType ot) {
 	if (ot == Integer) {
 		return 0;
 	}
-	else if (ot == Decimal && ptr1[1] == '\0') {
+	else if (ot == Decimal && ptr1[0] == '\0') {
 		*num *= DEC_DIV;
 		return 0;
 	}
@@ -190,7 +190,16 @@ void parse_command(struct CBuffer* cb) {
 		sprintf(cb->res, "%s", "to many arguments");
 	}
 	else if (ct == GetCmd) {
-		num2str(read_num(cmd->fp), cb->res, cmd->otype);
+		if (cmd->otype == String)
+			read_str(cmd->fp, cb->res);
+		else
+			num2str(read_num(cmd->fp), cb->res, cmd->otype);
+	}
+	else if (ct == SetCmd && cmd->otype == String) {
+		if (write_str(cmd->fp, tok) == 0)
+			sprintf(cb->res, "%s", "ok");
+		else
+			sprintf(cb->res, "%s", "error");
 	}
 	else if (ct == SetCmd) {
 		int32_t num;

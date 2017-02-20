@@ -1,5 +1,6 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <string.h>
 #include "tcontrol.h"
 #include "serial.h"
 #include "commands.h"
@@ -11,10 +12,11 @@
 #include "demo.h"
 #endif
 
-#define BOARD_ID 1
+#define BOARD_ID "tca"
 
-uint32_t get_id() {
-	return BOARD_ID;
+void get_id(char* id) {
+	strcpy(id, BOARD_ID);
+	return;
 }
 
 int main(void) {
