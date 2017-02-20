@@ -42,7 +42,7 @@ int32_t get_t1() {
 }
 
 int32_t get_t2() {
-	return ctrl.t1->temp_c;
+	return ctrl.t2->temp_c;
 }
 
 int32_t get_co() {
@@ -58,7 +58,7 @@ void init_control_loop(uint32_t tc) {
 
 	// read temperature channel configuration
 	ctrl.t1 = temperature_get_channel_by_name("t1");
-	ctrl.t2 = temperature_get_channel_by_name("t1");
+	ctrl.t2 = temperature_get_channel_by_name("t2");
 
 	// command interface initialization
 	set_command_handler(GetTs, &get_ts);
@@ -106,7 +106,11 @@ void update_control_timers() {
 void update_control_loop() {
 	update_control_timers();
 	temperature_read(ctrl.t1, 1);
+	temperature_read(ctrl.t2, 1);
+
 	ctrl.t1->temp_c = DEC_DIV * ctrl.t1->temp_raw / ctrl.t1->result_multiplier;
+	ctrl.t2->temp_c = DEC_DIV * ctrl.t2->temp_raw / ctrl.t2->result_multiplier;
+
 	if ((ctrl.t1->temp_c > ctrl.ts + ctrl.hu) && pin_state(ctrl.out) == Off)
 		set_control_out(&ctrl, On);
 	else if ((ctrl.t1->temp_c < ctrl.ts - ctrl.hl) && pin_state(ctrl.out) == On)

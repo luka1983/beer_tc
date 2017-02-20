@@ -137,6 +137,8 @@ Get commands come in following form
 and the response is formated requested object type. The list of retrievable objects as well as belonging
 types are given in following table.
 
+Format for requesting is "get <object>\n", where response does not contain any newline characters.
+
 ### Set commands
 Set commands come in following form.
 
