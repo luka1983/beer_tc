@@ -33,7 +33,7 @@ MQTT_LOCAL_PORT=1883
 sensor_read_period = 120
 
 # Sensor list
-sensors = ['t1', 't2', 'ts']
+sensors = ['t1', 't2', 'ts', 'co']
 
 # configuration topic name - this is the name of the topic for
 # configuration values. e.g. CONFIG_TOPIC/ts
@@ -98,8 +98,6 @@ If message fails to be sent, it will be queued for later sending
     queueu  - if message fails, queue it to the message queue, default True
 '''
 def send_message_to_server(message, topic, queue=1):
-    print("sending message: [" + topic + "]" + message)
-    syslog.syslog(syslog.LOG_INFO, "sending message: [" + topic + "]" + message)
     try:
         publish.single(topic, message, hostname=MQTT_HOST, port=MQTT_HOST_PORT, qos=1)
     except Exception as err:
