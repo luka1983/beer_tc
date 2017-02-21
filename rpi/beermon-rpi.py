@@ -115,7 +115,7 @@ def send_message_local(message, topic):
     print("sending local message: [" + topic + "]" + message)
     syslog.syslog(syslog.LOG_INFO, "sending local message: [" + topic + "]" + message)
     try:
-        publish.single(topic, message, hostname=MQTT_LOCAL_HOST, port=MQTT_LOCAL_PORT, qos=1, retain=True)
+        publish.single(topic, message, hostname=MQTT_LOCAL_HOST, port=MQTT_LOCAL_PORT, qos=1, retain=False)
     except Exception as err:
         print("Exception %r while sending message {%s}" %(err, "[" + topic + "]" + message))
         syslog.syslog(syslog.LOG_INFO, "Exception %r while sending message {%s}" %(err, "[" + topic + "]" + message))
@@ -309,14 +309,6 @@ if __name__ == "__main__":
         sys.exit(1)
 
     ser = serial.Serial(port, BAUD_RATE, timeout=1, write_timeout=1)
-
-    if not set_initial_ts():
-        print("Failed to set inital ts")
-        syslog.syslog(syslog.LOG_INFO, "Failed to set inital ts")
-        alarm("tctr", "FAILED to read sensor %s, errors in row %d" %(sensor, sens_errors[sensor]))
-        print("Exiting due to previous errors")
-        syslog.syslog(syslog.LOG_INFO, "Exiting due to previous errors")
-        sys.exit(1)
 
     # Global variable for mqtt unsent message queue
     message_queue = deque(maxlen = 20000)

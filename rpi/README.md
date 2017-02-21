@@ -28,9 +28,6 @@ $ mosquitto_pub -t beermon_config/ts -m "?"
 $ mosquitto_sub -t beermon_config/ts
 ```
 
-These messages have retain set, so whenever you subscribe, you will
-get last value.
-
 To set variable, send value to the topic/variable
 
 ```
