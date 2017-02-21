@@ -34,10 +34,13 @@
 
 google.load('visualization', '1.0', {'packages':['gauge', 'line', 'corechart']});
 
-/* Control how much points do we write on graph. 450 is already making page
- * un-responsive, so set 400 builds as a limit, it aproximately covers a month.
+/* Control how much points do we write on graph. XXXX is already making page
+ * un-responsive, so set XXXX as a limit.
  */
-var maximum_points=400;
+var maximum_points=9999999;
+
+/* Refresh page every this ms */
+var refresh_period=30000;
 
 /*!
  * \fn read_file() 
@@ -112,7 +115,7 @@ function parse_date(datestring)
 	explode_time = time.split(":");
 	hour = explode_time[0];
 	minute = explode_time[1];
-	second = 0;
+	second = explode_time[2];
 
 	return new Date(year, month-1, day, hour, minute, second);
 }
@@ -126,8 +129,10 @@ function parse_date(datestring)
  * line_labes - array with 1 to 1 mapping how data will be called in legend
  * title - graph title
  * value_axis_title - y-axis data name
+ * draw_table - populate min/max table
+ * curve_type - set to none or function
  */
-function draw_graphs(container_id, graphs, line_labels, title, value_axis_title, draw_table)
+function draw_graphs(container_id, graphs, line_labels, title, value_axis_title, draw_table, curve_type)
 {
 	var i, j;
 	var data = new Array();
@@ -233,7 +238,7 @@ function draw_graphs(container_id, graphs, line_labels, title, value_axis_title,
 	var options = {
 		height: 500,
 		title: title,
-		curveType: 'function',
+		curveType: curve_type,
 		legend: { position: 'none' },
 		explorer : {},
 		hAxis: {
@@ -251,18 +256,26 @@ function draw_graphs(container_id, graphs, line_labels, title, value_axis_title,
 	chart.draw(joined_data, options);
 }
 
+var interval_fn_cntr = 0
+
+setInterval(function(){
+	interval_fn_cntr += 1
+	console.log("Refreshing " + interval_fn_cntr)
+	bodyOnLoad()
+}, refresh_period);
+
 /**
   * Functions executes on body load - main()
   */
 function bodyOnLoad()
 {
 	var temperature_inputs = ["t1", "t2", "ts"];
-	var line_labels = ["T1", "T2", "set"];
-	draw_graphs("temperature", temperature_inputs, line_labels, 'Temperature Sensors', "T [C]", true);
+	var line_labels = ["T1 (control loop input)", "T2", "Ts (set temperature)"];
+	draw_graphs("temperature", temperature_inputs, line_labels, 'Temperature Sensors', "T [C]", true, 'function');
 
 	var control_inputs = [ "co" ];
 	var line_labels = ["Regulator output"];
-	draw_graphs("control", control_inputs, line_labels, 'Control', "Control", true);
+	draw_graphs("control", control_inputs, line_labels, 'Control', "Control", true, 'none');
 }
 
 </script>
@@ -300,12 +313,12 @@ function bodyOnLoad()
 					<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
 						<b>Results limit<span class="caret"></span></b></a>
 					<ul class="dropdown-menu">
-						<li><a href="javascript:void(0);" onclick="set_maximum_points(2000)">last 2000</a></li>
-						<li><a href="javascript:void(0);" onclick="set_maximum_points(400)">last 400 (default)</a></li>
+						<li><a href="javascript:void(0);" onclick="set_maximum_points(2000)">last 2000 </a></li>
+						<li><a href="javascript:void(0);" onclick="set_maximum_points(400)">last 400 </a></li>
 						<li><a href="javascript:void(0);" onclick="set_maximum_points(100)">last 100</a></li>
 						<li><a href="javascript:void(0);" onclick="set_maximum_points(20)">last 20</a></li>
 						<li role="separator" class="divider"></li>
-						<li><a href="javascript:void(0);" onclick="set_maximum_points(99999)">All</a></li>
+						<li><a href="javascript:void(0);" onclick="set_maximum_points(9999999)">All (default)</a></li>
 						<li role="separator" class="divider"></li>
 						<li><a href="javascript:void(0);"><span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>When set, click hide/show</a></li>
 					</ul>
@@ -328,7 +341,7 @@ function bodyOnLoad()
 	<!-- Temperature, this is displayed by default  -->
 	<div class="container">
 		<div class="row">
-			<h3 id="TIV">Temperature <small>
+			<h3 id="TIV">Temperature & Control<small>
 				<a id="toggle_about" href="#help" data-toggle="collapse"><span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span> info</a>
 				<a id="toggle_rand" href="#tiv" data-toggle="collapse"><span class="glyphicon glyphicon-resize-full" aria-hidden="true"></span> hide/show</a>
 				</small>
@@ -336,7 +349,10 @@ function bodyOnLoad()
 			<hr>
 			<div class="col-sm-12">
 				<div class="collapse" id="help">
-					<p class="text-blue-big">Temperature Sensors</p>
+					<p class="text-blue-big">Temperature Sensors and Control display. On sensors
+					graph, one can observe various temperatures in the system. Besides Ts (set) and
+					input (T1), there is third value which is usually placed *somewhere*.
+					Control graph displays various control values, such as driving the relay.</p>
 				</div>
 			</div>
 		</div>
