@@ -34,10 +34,10 @@
 
 google.load('visualization', '1.0', {'packages':['gauge', 'line', 'corechart']});
 
-/* Control how much points do we write on graph. 450 is already making page
- * un-responsive, so set 400 builds as a limit, it aproximately covers a month.
+/* Control how much points do we write on graph. XXXX is already making page
+ * un-responsive, so set XXXX as a limit.
  */
-var maximum_points=400;
+var maximum_points=9999999;
 
 /* Refresh page every this ms */
 var refresh_period=30000;
@@ -313,12 +313,12 @@ function bodyOnLoad()
 					<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
 						<b>Results limit<span class="caret"></span></b></a>
 					<ul class="dropdown-menu">
-						<li><a href="javascript:void(0);" onclick="set_maximum_points(2000)">last 2000</a></li>
-						<li><a href="javascript:void(0);" onclick="set_maximum_points(400)">last 400 (default)</a></li>
+						<li><a href="javascript:void(0);" onclick="set_maximum_points(2000)">last 2000 </a></li>
+						<li><a href="javascript:void(0);" onclick="set_maximum_points(400)">last 400 </a></li>
 						<li><a href="javascript:void(0);" onclick="set_maximum_points(100)">last 100</a></li>
 						<li><a href="javascript:void(0);" onclick="set_maximum_points(20)">last 20</a></li>
 						<li role="separator" class="divider"></li>
-						<li><a href="javascript:void(0);" onclick="set_maximum_points(99999)">All</a></li>
+						<li><a href="javascript:void(0);" onclick="set_maximum_points(9999999)">All (default)</a></li>
 						<li role="separator" class="divider"></li>
 						<li><a href="javascript:void(0);"><span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>When set, click hide/show</a></li>
 					</ul>
