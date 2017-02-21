@@ -357,5 +357,4 @@ if __name__ == "__main__":
                 syslog.syslog(syslog.LOG_INFO, "Debug - not sending")
             else:
                 send_message_to_server(message, "beermon/" + sensor)
-            time.sleep(1)
         time.sleep(sensor_read_period)
