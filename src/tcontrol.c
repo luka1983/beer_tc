@@ -12,11 +12,11 @@ static struct TempController ctrl = {
 	.t2 = NULL,
 	.state = Stopped,
 	.out = {
-		.port = &PORTD,
-		.dirreg = &DDRD,
-		.num = 2,
+		.port = &PORTB,
+		.dirreg = &DDRB,
+		.num = 1,
 		.dir = Out,
-		.active = Low
+		.active = High
 	}
 };
 
