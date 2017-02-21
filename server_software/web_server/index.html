@@ -112,7 +112,7 @@ function parse_date(datestring)
 	explode_time = time.split(":");
 	hour = explode_time[0];
 	minute = explode_time[1];
-	second = 0;
+	second = explode_time[2];
 
 	return new Date(year, month-1, day, hour, minute, second);
 }
