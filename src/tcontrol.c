@@ -16,12 +16,8 @@ static struct TempController tc = {
 		.dirreg = &DDRB,
 		.num = 1,
 		.dir = Out,
-<<<<<<< HEAD
-		.active = Low,
+		.active = High,
 		.init = Off
-=======
-		.active = High
->>>>>>> 88a64ca8b5f6ab7b1d36ae33cd07bd1c59e5ceb0
 	}
 };
 
