@@ -257,7 +257,7 @@ function draw_graphs(container_id, graphs, line_labels, title, value_axis_title,
 function bodyOnLoad()
 {
 	var temperature_inputs = ["t1", "t2", "ts"];
-	var line_labels = ["T1", "T2", "set"];
+	var line_labels = ["T1 (control loop input)", "T2", "Ts (set temperature)"];
 	draw_graphs("temperature", temperature_inputs, line_labels, 'Temperature Sensors', "T [C]", true);
 
 	var control_inputs = [ "co" ];
@@ -328,7 +328,7 @@ function bodyOnLoad()
 	<!-- Temperature, this is displayed by default  -->
 	<div class="container">
 		<div class="row">
-			<h3 id="TIV">Temperature <small>
+			<h3 id="TIV">Temperature & Control<small>
 				<a id="toggle_about" href="#help" data-toggle="collapse"><span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span> info</a>
 				<a id="toggle_rand" href="#tiv" data-toggle="collapse"><span class="glyphicon glyphicon-resize-full" aria-hidden="true"></span> hide/show</a>
 				</small>
@@ -336,7 +336,10 @@ function bodyOnLoad()
 			<hr>
 			<div class="col-sm-12">
 				<div class="collapse" id="help">
-					<p class="text-blue-big">Temperature Sensors</p>
+					<p class="text-blue-big">Temperature Sensors and Control display. On sensors
+					graph, one can observe various temperatures in the system. Besides Ts (set) and
+					input (T1), there is third value which is usually placed *somewhere*.
+					Control graph displays various control values, such as driving the relay.</p>
 				</div>
 			</div>
 		</div>
