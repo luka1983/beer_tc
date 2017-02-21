@@ -209,6 +209,10 @@ def process_message(topic, text):
             curr_ts = read_sensor("ts")
             send_message_local(curr_ts, CONFIG_TOPIC + "/ts")
         else:
+            if not is_float(value):
+                print("Value to be set not recognized as float <%s>" %(value,))
+                syslog.syslog(syslog.LOG_ERR, "Value to be set not recognized as float <%s>" %(value,))
+                return
             ret = send_over_serial_read_result("set ts " + value) 
             print("Set %s with %s, retval = %s" %(variable, value, ret))
             syslog.syslog(syslog.LOG_INFO, "Setting %s with %s, retval = %s" %(variable, value, ret))
