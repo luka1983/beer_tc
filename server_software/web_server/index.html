@@ -39,6 +39,9 @@ google.load('visualization', '1.0', {'packages':['gauge', 'line', 'corechart']})
  */
 var maximum_points=400;
 
+/* Refresh page every this ms */
+var refresh_period=30000;
+
 /*!
  * \fn read_file() 
  * \brief read local file from the server
@@ -252,6 +255,14 @@ function draw_graphs(container_id, graphs, line_labels, title, value_axis_title,
 
 	chart.draw(joined_data, options);
 }
+
+var interval_fn_cntr = 0
+
+setInterval(function(){
+	interval_fn_cntr += 1
+	console.log("Refreshing " + interval_fn_cntr)
+	bodyOnLoad()
+}, refresh_period);
 
 /**
   * Functions executes on body load - main()
