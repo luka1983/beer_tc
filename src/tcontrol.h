@@ -4,13 +4,16 @@
 typedef enum { Stopped, Started, Initializing, Running, Err } TCState;
 
 struct TempController {
+	int32_t ct;							// control loop update time
 	int32_t ts;							// control loop set temperature
 	int32_t hl;							// hysteresis lower threshold
 	int32_t hu;							// hysteresis upper threshold
 	struct temperature_channel* t1;		// main temperature sensor
 	struct temperature_channel* t2;		// secondary temperature sensor
-	TCState state;
-	struct Pin out;
+	TCState state;						// controller state
+	struct Pin out;						// controller output pin
+	int32_t cdc;						// cooldown counter
+	int32_t cdt;						// cooldown time - switch time limit
 };
 
 // init control loop, requires ct in ms

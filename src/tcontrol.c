@@ -5,6 +5,7 @@
 #include "commands.h"
 
 static struct TempController tc = {
+	.ct = 1000,
 	.ts = 21 * DEC_DIV,
 	.hl = 5 * DEC_DIV / 10,
 	.hu = 5 * DEC_DIV / 10,
@@ -12,13 +13,15 @@ static struct TempController tc = {
 	.t2 = NULL,
 	.state = Stopped,
 	.out = {
-		.port = &PORTB,
-		.dirreg = &DDRB,
-		.num = 1,
+		.port = &PORTD,
+		.dirreg = &DDRD,
+		.num = 2,
 		.dir = Out,
-		.active = High,
+		.active = Low,
 		.init = Off
-	}
+	},
+	.cdc = 0,
+	.cdt = 10000
 };
 
 static struct Pin led = {
@@ -27,7 +30,7 @@ static struct Pin led = {
 	.num = 5,
 	.dir = Out,
 	.active = High,
-	.init = Off
+	.init = On
 };
 
 int32_t get_ts() {
@@ -52,6 +55,8 @@ int32_t get_co() {
 }
 
 void init_control_loop(uint32_t ct) {
+	tc.ct = ct;
+
 	// controller digital output init
 	pin_init(tc.out);
 
@@ -83,6 +88,7 @@ void init_control_loop(uint32_t ct) {
 
 void start_control_loop() {
 	tc.state = Started;
+	tc.cdc = tc.cdt * tc.ct;
 	TCCR1B |= (1 << CS10) | (1 << CS12);	// Set prescaler (starts timer)
 	return;
 }
@@ -94,6 +100,7 @@ void stop_control_loop() {
 }
 
 void set_control_out(PinState out) {
+	tc.cdc = 0;
 	// inverted output
 	if (out == On)
 		pin_on(tc.out);
@@ -102,6 +109,7 @@ void set_control_out(PinState out) {
 }
 
 void update_control_timers() {
+	tc.cdc++;
 	return;
 }
 
@@ -114,6 +122,7 @@ void update_temperature_readings() {
 
 void update_controller() {
 	update_control_timers();
+	if (tc.cdc < tc.cdt / tc.ct) return;
 	if ((tc.t1->temp_c > tc.ts + tc.hu) && pin_state(tc.out) == Off)
 		set_control_out(On);
 	else if ((tc.t1->temp_c < tc.ts - tc.hl) && pin_state(tc.out) == On)
@@ -135,7 +144,6 @@ void update_control_loop() {
 			break;
 		case Running:
 			update_controller();
-
 	}
 	return;
 }
