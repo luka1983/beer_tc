@@ -348,8 +348,13 @@ if __name__ == "__main__":
                 print("Exiting due to previous errors")
                 syslog.syslog(syslog.LOG_INFO, "Exiting due to previous errors")
                 sys.exit(1)
-            date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            message = str(date) + "," + value
+            date = datetime.datetime.now()
+            if date.second < 30:
+                date = date.replace(second = 0)
+            else:
+                date = date.replace(second = 30)
+            date_s = date.strftime("%Y-%m-%d %H:%M:%S")
+            message = str(date_s) + "," + value
             print("Sending %s: %s" %(sensor, message))
             syslog.syslog(syslog.LOG_INFO, "Sending %s: %s" %(sensor, message))
             if debug:
