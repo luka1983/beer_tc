@@ -217,7 +217,7 @@ def process_message(topic, text):
             print("Set %s with %s, retval = %s" %(variable, value, ret))
             syslog.syslog(syslog.LOG_INFO, "Setting %s with %s, retval = %s" %(variable, value, ret))
             # Refresh retained value and notify listeners
-            send_message_local(value, CONFIG_TOPIC + "/ts")
+            # send_message_local(value, CONFIG_TOPIC + "/ts")
 
 def beermon_handler_on_connect(client, userdata, rc):
     print("Connected with result code "+str(rc))
