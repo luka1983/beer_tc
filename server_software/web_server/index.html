@@ -126,8 +126,10 @@ function parse_date(datestring)
  * line_labes - array with 1 to 1 mapping how data will be called in legend
  * title - graph title
  * value_axis_title - y-axis data name
+ * draw_table - populate min/max table
+ * curve_type - set to none or function
  */
-function draw_graphs(container_id, graphs, line_labels, title, value_axis_title, draw_table)
+function draw_graphs(container_id, graphs, line_labels, title, value_axis_title, draw_table, curve_type)
 {
 	var i, j;
 	var data = new Array();
@@ -233,7 +235,7 @@ function draw_graphs(container_id, graphs, line_labels, title, value_axis_title,
 	var options = {
 		height: 500,
 		title: title,
-		curveType: 'function',
+		curveType: curve_type,
 		legend: { position: 'none' },
 		explorer : {},
 		hAxis: {
@@ -258,11 +260,11 @@ function bodyOnLoad()
 {
 	var temperature_inputs = ["t1", "t2", "ts"];
 	var line_labels = ["T1 (control loop input)", "T2", "Ts (set temperature)"];
-	draw_graphs("temperature", temperature_inputs, line_labels, 'Temperature Sensors', "T [C]", true);
+	draw_graphs("temperature", temperature_inputs, line_labels, 'Temperature Sensors', "T [C]", true, 'function');
 
 	var control_inputs = [ "co" ];
 	var line_labels = ["Regulator output"];
-	draw_graphs("control", control_inputs, line_labels, 'Control', "Control", true);
+	draw_graphs("control", control_inputs, line_labels, 'Control', "Control", true, 'none');
 }
 
 </script>
