@@ -4,7 +4,7 @@
 #include "tcontrol.h"
 #include "commands.h"
 
-static struct TempController ctrl = {
+static struct TempController tc = {
 	.ts = 21 * DEC_DIV,
 	.hl = 5 * DEC_DIV / 10,
 	.hu = 5 * DEC_DIV / 10,
@@ -16,7 +16,8 @@ static struct TempController ctrl = {
 		.dirreg = &DDRD,
 		.num = 2,
 		.dir = Out,
-		.active = Low
+		.active = Low,
+		.init = Off
 	}
 };
 
@@ -25,40 +26,41 @@ static struct Pin led = {
 	.dirreg = &DDRB,
 	.num = 5,
 	.dir = Out,
-	.active = High
+	.active = High,
+	.init = Off
 };
 
 int32_t get_ts() {
-	return ctrl.ts;
+	return tc.ts;
 }
 
 uint8_t set_ts(int32_t ts) {
-	ctrl.ts = ts;
+	tc.ts = ts;
 	return 0;
 }
 
 int32_t get_t1() {
-	return ctrl.t1->temp_c;
+	return tc.t1->temp_c;
 }
 
 int32_t get_t2() {
-	return ctrl.t2->temp_c;
+	return tc.t2->temp_c;
 }
 
 int32_t get_co() {
-	return pin_state(ctrl.out) == On ? 1 : 0;
+	return pin_state(tc.out) == On ? 1 : 0;
 }
 
-void init_control_loop(uint32_t tc) {
+void init_control_loop(uint32_t ct) {
 	// controller digital output init
-	pin_init(ctrl.out);
+	pin_init(tc.out);
 
 	// led pin init_cl
 	pin_init(led);
 
 	// read temperature channel configuration
-	ctrl.t1 = temperature_get_channel_by_name("t1");
-	ctrl.t2 = temperature_get_channel_by_name("t2");
+	tc.t1 = temperature_get_channel_by_name("t1");
+	tc.t2 = temperature_get_channel_by_name("t2");
 
 	// command interface initialization
 	set_command_handler(GetTs, &get_ts);
@@ -74,47 +76,68 @@ void init_control_loop(uint32_t tc) {
 	// Cmp register value for tc in ms => OCR1A = tc * (f_cpu / 1000) / prescaler.
 	// For atmega328p max prescaler value is 1024 meaning max achievable tc in ms
 	// is 1024 * 2^16 / F_CPU i.e. 4194ms with F_CPU = 16MHz
-	OCR1A = (uint16_t)(tc * (F_CPU / 1000) / 1024);
+	OCR1A = (uint16_t)(ct * (F_CPU / 1000) / 1024);
 
 	return;
 }
 
 void start_control_loop() {
-	ctrl.state = Started;
+	tc.state = Started;
 	TCCR1B |= (1 << CS10) | (1 << CS12);	// Set prescaler (starts timer)
 	return;
 }
 
 void stop_control_loop() {
-	ctrl.state = Stopped;
+	tc.state = Stopped;
 	TCCR1B &= ~((1 << CS10) | (1 << CS12));
 	return;
 }
 
-void set_control_out(struct TempController* tc, PinState out) {
+void set_control_out(PinState out) {
 	// inverted output
 	if (out == On)
-		pin_on(tc->out);
+		pin_on(tc.out);
 	else if (out == Off)
-		pin_off(tc->out);
+		pin_off(tc.out);
 }
 
 void update_control_timers() {
 	return;
 }
 
-void update_control_loop() {
+void update_temperature_readings() {
+	temperature_read(tc.t1, 1);
+	temperature_read(tc.t2, 1);
+	tc.t1->temp_c = DEC_DIV * tc.t1->temp_raw / tc.t1->result_multiplier;
+	tc.t2->temp_c = DEC_DIV * tc.t2->temp_raw / tc.t2->result_multiplier;
+}
+
+void update_controller() {
 	update_control_timers();
-	temperature_read(ctrl.t1, 1);
-	temperature_read(ctrl.t2, 1);
+	if ((tc.t1->temp_c > tc.ts + tc.hu) && pin_state(tc.out) == Off)
+		set_control_out(On);
+	else if ((tc.t1->temp_c < tc.ts - tc.hl) && pin_state(tc.out) == On)
+		set_control_out(Off);
+}
 
-	ctrl.t1->temp_c = DEC_DIV * ctrl.t1->temp_raw / ctrl.t1->result_multiplier;
-	ctrl.t2->temp_c = DEC_DIV * ctrl.t2->temp_raw / ctrl.t2->result_multiplier;
+void update_control_loop() {
+	update_temperature_readings();
 
-	if ((ctrl.t1->temp_c > ctrl.ts + ctrl.hu) && pin_state(ctrl.out) == Off)
-		set_control_out(&ctrl, On);
-	else if ((ctrl.t1->temp_c < ctrl.ts - ctrl.hl) && pin_state(ctrl.out) == On)
-		set_control_out(&ctrl, Off);
+	switch (tc.state) {
+		case Stopped:
+		case Err:
+			break;
+		case Started:
+			tc.state = Initializing;
+			break;
+		case Initializing:
+			tc.state = Running;
+			break;
+		case Running:
+			update_controller();
+
+	}
+	return;
 }
 
 ISR(TIMER1_COMPA_vect) {

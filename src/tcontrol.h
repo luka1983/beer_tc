@@ -1,7 +1,7 @@
 #include "temperature.h"
 #include "gpio.h"
 
-typedef enum { Stopped, Started, Err } TCState;
+typedef enum { Stopped, Started, Initializing, Running, Err } TCState;
 
 struct TempController {
 	int32_t ts;							// control loop set temperature
@@ -13,8 +13,8 @@ struct TempController {
 	struct Pin out;
 };
 
-// init control loop, requires tc in ms
-void init_control_loop(uint32_t tc);
+// init control loop, requires ct in ms
+void init_control_loop(uint32_t ct);
 void start_control_loop();
 void stop_control_loop();
 

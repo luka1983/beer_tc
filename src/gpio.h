@@ -10,6 +10,7 @@ struct Pin {
 	uint8_t num;
 	PinDir dir;
 	PinActive active;
+    PinState init;
 };
 
 void pin_init(struct Pin pin);
