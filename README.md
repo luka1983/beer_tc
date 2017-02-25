@@ -154,8 +154,8 @@ While _get_ command is supported for all listed objects, only some can be update
 | ts     | decimal   | rw  | controller set temperature                       | a      |
 | t1     | decimal   | ro  | temperature reading for 1st sensor               | a      |
 | t2     | decimal   | ro  | temperature reading for 2nd sensor               | a      |
-| dt     | integer   | rw  | control loop discretization time (ms)            | n/a    |
-| ct     | integer   | rw  | minimal output change interval duration (s)      | n/a    |
+| ct     | integer   | rw  | control loop discretization time (ms)            | n/a    |
+| cd     | integer   | rw  | output state change cooldown interval (ms)       | n/a    |
 | un     | string    | rw  | unit system in use, i for imperial, m for metric | n/a    |
 | fw     | string    | ro  | firmware version                                 | n/a    |
-| id     | integer   | ro  | board id                                         | a      |
+| id     | string    | ro  | board id                                         | a      |
