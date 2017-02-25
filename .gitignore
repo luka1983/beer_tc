@@ -1,2 +1,18 @@
 *.hex
 *.un~
+
+# compiled output
+webapp/beermon_v2/dist
+webapp/beermon_v2/tmp
+
+# dependencies
+webapp/beermon_v2/node_modules
+webapp/beermon_v2/bower_components
+
+# misc
+webapp/beermon_v2/.sass-cache
+webapp/beermon_v2/connect.lock
+webapp/beermon_v2/coverage/*
+webapp/beermon_v2/libpeerconnection.log
+npm-debug.log
+testem.log
