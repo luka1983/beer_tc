@@ -269,13 +269,13 @@ setInterval(function(){
   */
 function bodyOnLoad()
 {
-	var temperature_inputs = ["t1", "t2", "ts"];
-	var line_labels = ["T1 (control loop input)", "T2", "Ts (set temperature)"];
+	var temperature_inputs = ["t1", "t2", "ts", "co"];
+	var line_labels = ["T1 (control loop input)", "T2", "Ts (set temperature)", "Co - Control output (Not temperature)"];
 	draw_graphs("temperature", temperature_inputs, line_labels, 'Temperature Sensors', "T [C]", true, 'function');
 
-	var control_inputs = [ "co" ];
-	var line_labels = ["Regulator output"];
-	draw_graphs("control", control_inputs, line_labels, 'Control', "Control", true, 'none');
+	//var control_inputs = [ "co" ];
+	//var line_labels = ["Regulator output"];
+	//draw_graphs("control", control_inputs, line_labels, 'Control', "Control", true, 'none');
 }
 
 </script>
