@@ -7,6 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="">
 <meta name="author" content="Matija Glavinic Pecotic">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="EXPIRES" CONTENT="Mon, 22 Jul 2002 11:12:01 GMT">
 
 <title>BeerMon</title>
 
@@ -242,7 +244,7 @@ function draw_graphs(container_id, graphs, line_labels, title, value_axis_title,
 		legend: { position: 'none' },
 		explorer : {},
 		hAxis: {
-			title: 'Datum'
+			title: 'Date'
 			},
 		vAxis: {
 			title: value_axis_title
@@ -269,13 +271,13 @@ setInterval(function(){
   */
 function bodyOnLoad()
 {
-	var temperature_inputs = ["t1", "t2", "ts"];
-	var line_labels = ["T1 (control loop input)", "T2", "Ts (set temperature)"];
+	var temperature_inputs = ["t1", "t2", "ts", "co"];
+	var line_labels = ["T1 (control loop input)", "T2", "Ts (set temperature)", "Co - Control output (Not temperature)"];
 	draw_graphs("temperature", temperature_inputs, line_labels, 'Temperature Sensors', "T [C]", true, 'function');
 
-	var control_inputs = [ "co" ];
-	var line_labels = ["Regulator output"];
-	draw_graphs("control", control_inputs, line_labels, 'Control', "Control", true, 'none');
+	//var control_inputs = [ "co" ];
+	//var line_labels = ["Regulator output"];
+	//draw_graphs("control", control_inputs, line_labels, 'Control', "Control", true, 'none');
 }
 
 </script>
