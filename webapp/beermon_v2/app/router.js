@@ -7,6 +7,10 @@ const Router = Ember.Router.extend({
 });
 
 Router.map(function() {
+  this.route('beermon', function () {
+    this.route('devices');
+    this.route('device', { path: '/device/:id'});
+  });
 });
 
 export default Router;

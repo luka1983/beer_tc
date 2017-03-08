@@ -14,5 +14,6 @@ webapp/beermon_v2/.sass-cache
 webapp/beermon_v2/connect.lock
 webapp/beermon_v2/coverage/*
 webapp/beermon_v2/libpeerconnection.log
+webapp/beermon_v2/cSpell.json
 npm-debug.log
 testem.log

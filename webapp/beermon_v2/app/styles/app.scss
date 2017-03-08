@@ -1,0 +1,60 @@
+@import "bootstrap";
+
+.top-0 {
+    top: 0px;
+}
+
+.font-20 {
+    font-size: 20px;
+}
+
+.box-shadow-none {
+    box-shadow: none !important;
+}
+
+.content {
+    padding-top: 85px;
+}
+
+.img-center {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.padding-10 {
+    padding: 10px;
+}
+
+.margin-10 {
+    margin: 10px;
+}
+
+.device-summary {
+    @extend .margin-10;
+    @extend .padding-10;
+    @extend .cur-pointer;
+    box-shadow: 0 3px 4px 0 rgba(0,0,0,0.16), 0 0 0 1px rgba(0,0,0,0.08);
+}
+
+.device-summary:hover {
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.08);
+}
+
+.cur-pointer {
+    cursor: pointer;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.status-light {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: solid;
+    border-width: 1px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+}

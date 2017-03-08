@@ -1,0 +1,22 @@
+<div class="container content">
+	{{#if (eq devices.length 0)}}
+		<div class="font-20 text-center">No devices found</div>
+	{{else}}
+		{{#each filteredDevices as | device |}}
+			{{#link-to "beermon.device" device}}
+				<div class="col-md-4 padding-10">
+					<div class="device-summary">
+						<img class="img-center" src="/assets/images/arduino_pro_mini.png">
+						<div class="caption">
+							<dl class="dl-horizontal">
+								<dt>Device ID</dt><dd>{{device.id}}</dd>
+								<dt>Status</dt><dd>{{status-light status=device.status}}</dd>
+								<dt>Description</dt><dd>{{device.desc}}</dd>
+							</dl>
+						</div>
+					</div>
+				</div>
+			{{/link-to}}
+		{{/each}}
+	{{/if}}
+</div>

@@ -1,10 +1,10 @@
 # Beermon-v2
+This documents describes beermon-v2, beer monitoring web application as a part
+of beer temperature monitoring and control solution.
 
-This README outlines the details of collaborating on this Ember application.
-A short introduction of this app could easily go here.
+This web application uses mqtt protocol as primary connection to server.
 
-## Prerequisites
-
+## Development prerequisites
 You will need the following things properly installed on your computer.
 
 * [Git](http://git-scm.com/)
@@ -15,39 +15,49 @@ You will need the following things properly installed on your computer.
 
 ## Installation
 
-* `git clone <repository-url>` this repository
-* `cd beermon-v2`
-* `npm install`
-* `bower install`
+		$ cd beermon_v2
+		$ npm install
+		$ bower install
 
 ## Running / Development
 
-* `ember serve`
-* Visit your app at [http://localhost:4200](http://localhost:4200).
+		$ ember serve
+Visit your app at [http://localhost:4200](http://localhost:4200).
 
-### Code Generators
 
-Make use of the many generators for code, try `ember help generate` for more details
+## Building
+Development:
+		$ ember build
+Production:
+		$ ember build --environment production
 
-### Running Tests
-
-* `ember test`
-* `ember test --server`
-
-### Building
-
-* `ember build` (development)
-* `ember build --environment production` (production)
-
-### Deploying
-
+## Deploying
 Specify what it takes to deploy your app.
 
-## Further Reading / Useful Links
+## Appendix
+Here, some additional instructions are given.
 
-* [ember.js](http://emberjs.com/)
-* [ember-cli](http://ember-cli.com/)
-* Development Browser Extensions
-  * [ember inspector for chrome](https://chrome.google.com/webstore/detail/ember-inspector/bmdblncegkenkacieihfhpjfppoconhi)
-  * [ember inspector for firefox](https://addons.mozilla.org/en-US/firefox/addon/ember-inspector/)
+### WebSocket enabled MQTT broker
+Since beermon components communicate data/commands with beermon server via
+MQTT protocol, the WebSocket enabled MQTT broker is needed. Here are the
+instructions for deployment of __mosquitto__ MQTT broker to server running
+Debian Jessie Linux distribution. The version of __mosquitto__ broker needs
+to be >=1.4 and since Jessie official repo includes older release.
+
+		$ wget http://repo.mosquitto.org/debian/mosquitto-repo.gpg.key
+		$ sudo apt-key add mosquitto-repo.gpg.key
+		$ sudo apt-get update
+		$ sudo apt-get install mosquitto
+
+The content of example mosquitto configuration file _mosquitto_local.conf_
+located in _/etc/mosquitto/conf.d/_ directory is given below:
+
+		listener 1883
+		listener 1884
+		protocol websockets
+
+Port 1884 is configured here to listen for ws connections. After confuguration
+change, mosquitto broker restart is needed. It can be performed with:
+
+		$ sudo /etc/init.d/mosquitto restart
 
