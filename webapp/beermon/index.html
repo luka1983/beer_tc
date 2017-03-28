@@ -127,8 +127,6 @@ function GraphContainer(container_id,
 		var xmlhttp = new XMLHttpRequest();
 		var myself = this;
 
-		console.log("Getting data for " + graph)
-
 		xmlhttp.open("GET", "./results/" + graph, true);
 
 		xmlhttp.onload = function (e) {
@@ -344,7 +342,6 @@ function GraphContainer(container_id,
 	}
 
 	for (var i = 0; i < this.graphs.length; i++) {
-		console.log("Starting to process " + this.graphs[i]);
 		this.read_graph_data_from_file(this.graphs[i]);
 	}
 }
@@ -447,8 +444,6 @@ function populate_selected_checkboxes()
 		document.getElementById("select_" + splitted_values[i]).checked = true;
 	}
 
-	console.log("Maximum points == " + maximum_points)
-
 	if (maximum_points == 2000) {
 		document.getElementById("sel2000").checked = true;
 	} else if (maximum_points == 400) {
@@ -458,7 +453,6 @@ function populate_selected_checkboxes()
 	} else if (maximum_points == 20) {
 		document.getElementById("sel20").checked = true;
 	} else if (maximum_points == 9999999) {
-		console.log("Maximum points == " + maximum_points + ", selecintg all")
 		document.getElementById("selall").checked = true;
 	} else {
 		console.log("Error - could not select maximum points!");
@@ -504,8 +498,6 @@ function configure_default_options()
   */
 function bodyOnLoad()
 {
-	console.log("Body loaded")
-
 	configure_default_options();
 
 	var graphs_inputs = [];
