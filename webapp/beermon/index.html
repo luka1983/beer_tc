@@ -7,10 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="">
 <meta name="author" content="Matija Glavinic Pecotic">
-<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
-<META HTTP-EQUIV="EXPIRES" CONTENT="Mon, 22 Jul 2002 11:12:01 GMT">
 
-<title>BeerMon</title>
+<title>BrewMon</title>
 
 <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
 
@@ -20,7 +18,7 @@
 <!-- Custom CSS -->
 <link href="css/site-specific.css" rel="stylesheet">
 
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
 <!--[if IE]><script type="text/javascript" src="excanvas.js"></script><![endif]-->
 
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
@@ -34,68 +32,7 @@
 <![endif]-->
 <script>
 
-google.load('visualization', '1.0', {'packages':['gauge', 'line', 'corechart']});
-
-/* Control how much points do we write on graph. XXXX is already making page
- * un-responsive, so set XXXX as a limit.
- */
-var maximum_points=9999999;
-
-/* Refresh page every this ms */
-var refresh_period=30000;
-
-/*!
- * \fn read_file() 
- * \brief read local file from the server
- *
- *  Read local file from the server
- * 
- *  \param file_name - file name
- *
- *  \returns response in form of text
- */
-function read_file(file_name)
-{
-	var xmlhttp=new XMLHttpRequest();
-
-	xmlhttp.open("GET", "./" + file_name,false);
-	xmlhttp.send();
-
-	if (xmlhttp.status == 200) {
-		var lines = xmlhttp.responseText.split("\n");
-		var items_to_return = lines.length - maximum_points;
-		if (items_to_return < 1) {
-			return xmlhttp.responseText;
-		} else {
-			var lines_to_return = lines.slice(items_to_return, lines.length);
-			return lines_to_return.join("\n");
-		}
-	} else {
-		return null;
-	}
-}	
-
-/*!
- * \fn set_maximum_points(nr_points) 
- * \brief set how much points will be displayed on graph
- *
- *  Sets number of points to be processed by display logic
- * 
- *  \param nr_points - number of points
- */
-function set_maximum_points(nr_points)
-{
-	maximum_points = nr_points;
-}
-
-/**
- * Function is called when row in table is clicked. Params are 
- * same as theones given to modal above
- */
-function display_selected_graph(graph, title, value_axis_title)
-{
-	console.log('Table row clicked:' + graph);
-}
+google.charts.load('current', {packages: ['corechart', 'line']});
 
 /**
   * Functon parses date in form 2012-03-12 12:34:34 format
@@ -122,162 +59,475 @@ function parse_date(datestring)
 	return new Date(year, month-1, day, hour, minute, second);
 }
 
-/* Function draws graphs AND populates table graph-table with minmax values.
- * This function does too much, but thats in the favour of going only once
- * through whole data set.
- * Arguments are:
- * container_id - id of the container where graph will be shown
- * graphs - array with names of the files with input data
- * line_labes - array with 1 to 1 mapping how data will be called in legend
- * title - graph title
- * value_axis_title - y-axis data name
- * draw_table - populate min/max table
- * curve_type - set to none or function
+/* Graph object - representation of single graph data set
  */
-function draw_graphs(container_id, graphs, line_labels, title, value_axis_title, draw_table, curve_type)
+function Graph(container_id, id, label)
 {
-	var i, j;
-	var data = new Array();
+	this.container_id = container_id;
+	this.graph_data = [];
+	this.minimum = null;
+	this.maximum = null;
+	this.id = id;
+	this.label = label;
+}
+/*
+ * GraphContainer object
+ *
+ * Representation of a unioin of graphs. Use this object to manage and draw
+ * graphs.
+ *
+ * Parameters:
+ *
+ *  container_id - id of container where graph will be drawn
+ *  graphs - names of the specific graphs. Atm, this is implementation
+ *           specific, it represents file names where data can be found
+ *  line_labels - Line labels for each graph defined in $graphs. Line labels
+ *                must be defined respecitevly to graphs!
+ *  title - title of the graph
+ *  values_axis_title - Title for the value axis, e.g. Creation Time [s]
+ *  draw_table - if set to true, table with minmax values will be drawn
+ *  branches - array of branches, multiple branches can be drawn
+ *             on a single graph 
+ */
+function GraphContainer(container_id,
+               graphs,
+               line_labels,
+               title,
+               value_axis_title,
+               draw_table,
+               graph_branches)
+{
+	/****************** Public attributes *********************/
+	this.container_id = container_id;
+	this.graphs = graphs;
+	this.line_labels = line_labels;
+	this.title = title;
+	this.value_axis_title = value_axis_title;
+	this.draw_table = draw_table;
+	this.graph_branches = graph_branches;
 
-	var joined_data = new google.visualization.DataTable();
+	/******************* Private attributes *********************/
 
-	var minimum = [];
-	var maximum = [];
+	/* Sync variable - here are stored processed graphs */
+	this.processed_graphs = [];
 
-	var min_max_table = '<table class="table table-hover table-condensed"><caption>'+ 
-			title +
-			'</caption><thead><tr><th>Sensor</th><th>Minimum Value (Date)'+
-			'</th><th>Maximum Value (Date)</th></tr></thead><tbody>';
+	/* Graph data - array of Graph objects */
+	this.graph_data = [];
 
-	for (i = 0; i < graphs.length; i++) {
-		minimum[i] = null;
-		maximum[i] = null;
+	/* Joined all graphs data */
+	this.joined_data = new google.visualization.DataTable();
 
-		file = read_file("results/" + graphs[i]);
-		if (file == null) {
-			console.log("Couldnt load file " + graphs[i]);
-			// here should be continue, but below logic breaks
-			// in such case, so just do this and hope no one saw
-			// it. This will result in empty datasets and nothing
-			// displayed
-			file = "null"
-		} else {
-			console.log("Read file " + graphs[i]) 
-		}
-		var lines = file.split('\n');
-		//console.log("Lines: " + lines.length)
+	/*********************** Methods *****************************/
 
-		data[i] = new google.visualization.DataTable();
-		data[i].addColumn('date', 'Date');
-		data[i].addColumn('number', line_labels[i]);
+	/* Read graph data from file */
+	this.read_graph_data_from_file = function(graph)
+	{
+		var xmlhttp = new XMLHttpRequest();
+		var myself = this;
 
-		for (j = 0; j < lines.length; j++) {
+		console.log("Getting data for " + graph)
 
-			/* Lines are in format 2012-03-14 23:45:32,value */
-			var val = lines[j].split(',');
-			var date = val[0]
-			if (typeof val[1] === 'undefined') {
-				continue
-			}
-			ts = parse_date(date);
-			data[i].addRow([ts, Number(val[1])]);
-			
-			if (minimum[i] == null) {
-				minimum[i] = [];
-				minimum[i] = [ date, val[1] ];
-			} else {
-				if (Number(minimum[i][1]) > Number(val[1])) {
-					minimum[i] = [date, val[1]];
+		xmlhttp.open("GET", "./results/" + graph, true);
+
+		xmlhttp.onload = function (e) {
+			if (xmlhttp.readyState === 4) {
+				if (xmlhttp.status === 200 || xmlhttp.status == 0) {
+					myself.populate_graph_data(graph, xmlhttp.responseText);
+				} else {
+					myself.populate_graph_data(graph, "");
+					console.error(xmlhttp.statusText);
 				}
 			}
-			if (maximum[i] == null) {
-				maximum[i] = [];
-				maximum[i] = [ date, val[1] ];
-			} else {
-				if (Number(maximum[i][1]) < Number(val[1])) {
-					maximum[i] = [date, val[1]];
-				}
-			}
-		}
-
-		/* This is just to have table with different row colors bg */
-		if (i % 2) {
-			tr_class = "success"
-		} else {
-			tr_class = "info"   
-		}
-
-		min_max_table += 
-			'<tr class="' + tr_class  + '" style="cursor: pointer;" onclick="display_selected_graph(' 
-				+ '\'' + graphs[i] + '\''  + ',' + '\''  + title + '\''  + ',' 
-				+ '\''  + value_axis_title + '\''  + ')">';
-
-		min_max_table += '<td>' + line_labels[i] + 
-			'</td><td>' + minimum[i][1] + ' ('
-			+ minimum[i][0] + ')</td><td>' + maximum[i][1]
-			+ ' (' + maximum[i][0] + ')</td></tr>';
+		};
+		xmlhttp.onerror = function (e) {
+			console.error(xmlhttp.statusText);
+		};
+		xmlhttp.send(null);
 	}
 
-	min_max_table += '</tbody></table>';
+	/* Mark that specific graph is processed */
+	this.mark_graph_processed = function(graph)
+	{
+		for (var i = 0; i < this.processed_graphs.length; i++) {
+			if (this.processed_graphs[i][0] == graph) {
+				this.processed_graphs[i][1] = true;	
+			}
+		}
+	}
 
-	if (draw_table) {
+	/* Check whether all graphs are processed */
+	this.check_all_finished = function()
+	{
+		for (var i = 0; i < this.processed_graphs.length; i++) {
+			if (this.processed_graphs[i][1] == false) {
+				return false
+			}
+		}
+		return true
+	}
+
+	/* Get line_label - gets line label for graph */
+	this.get_line_label = function(graph)
+	{
+		for(var i = 0; i < this.graphs.length; i++) {
+			if (this.graphs[i] == graph) {
+				return this.line_labels[i];
+			}
+		}
+	}
+
+	/* Populate graph data */
+	this.populate_graph_data = function(graph, text)
+	{
+			var lines = text.split("\n");
+			var items_to_return = lines.length - maximum_points;
+			if (items_to_return > 1) {
+				var lines = lines.slice(items_to_return, lines.length);
+			}
+
+			var index = this.graph_data.length;
+			this.graph_data[index] = new Graph(this.container_id, graph, this.get_line_label(graph));
+			this.graph_data[index].graph_data = new google.visualization.DataTable();
+
+			this.graph_data[index].graph_data.addColumn('date', 'Date');
+			this.graph_data[index].graph_data.addColumn('number', this.get_line_label(graph));
+
+			for (i = 0; i < lines.length; i++) {
+				if (i % decimation != 0)
+					continue;
+				/* Lines are in format 2012-03-14 23:45:32,value */
+				var val = lines[i].split(',');
+				var date = val[0]
+				if (typeof val[1] === 'undefined') {
+					continue
+				}
+				ts = parse_date(date);
+				this.graph_data[index].graph_data.addRow([ts, Number(val[1])]);
+
+				if (this.graph_data[index].minimum == null) {
+					this.graph_data[index].minimum = [];
+					this.graph_data[index].minimum = [ ts, val[1] ];
+				} else {
+					if (Number(this.graph_data[index].minimum[1]) > Number(val[1])) {
+						this.graph_data[index].minimum = [ts, val[1]];
+					}
+				}
+				if (this.graph_data[index].maximum == null) {
+					this.graph_data[index].maximum = [];
+					this.graph_data[index].maximum = [ ts, val[1] ];
+				} else {
+					if (Number(this.graph_data[index].maximum[1]) < Number(val[1])) {
+						this.graph_data[index].maximum = [ts, val[1]];
+					}
+				}
+			}
+
+			this.mark_graph_processed(graph)
+
+			if (this.check_all_finished()) {
+				console.log("All graphs are loaded for " + container_id)
+				this.draw_graphs();
+				if (this.draw_table == true)
+					this.draw_minmax_table();
+			}
+	}
+
+	/* Unify and draw data */
+	this.draw_graphs = function()
+	{
+		if (this.graphs.length > 1) {
+			var columns = new Array();
+			columns[0] = 1;
+			this.joined_data = google.visualization.data.join(this.graph_data[0].graph_data, this.graph_data[1].graph_data, 'full', [[0, 0]], [1], [1]);
+			for(var i = 2; i < this.graphs.length; i++) {
+				columns[i-1] = i;			
+				this.joined_data = google.visualization.data.join(this.joined_data, this.graph_data[i].graph_data, 'full', [[0, 0]], columns, [1]);
+			}
+		} else {
+			this.joined_data = this.graph_data[0].graph_data;
+		}	
+
+		var branches_string = ""
+		for (var i = 0; i < this.graph_branches.length; i++) {
+			if (this.graph_branches[i] == "")
+				if (branches_string == "")
+					branches_string += "master";
+				else
+					branches_string += ", master";
+			else
+				if (branches_string != "")
+					branches_string += ", " + this.graph_branches[i].substring(0, this.graph_branches[i].length - 1)
+				else
+					branches_string += this.graph_branches[i].substring(0, this.graph_branches[i].length - 1)
+		}
+
+		graph_title = this.title + " (" + branches_string + ")";
+
+		var options = {
+			height: 500,
+			title: graph_title,
+			curveType: 'function',
+			legend: { position: 'top' },
+			explorer : {},
+			hAxis: {
+				title: 'Datum'
+				},
+			vAxis: {
+				title: this.value_axis_title
+			},
+			pointSize: 4,
+		};
+		
+		var chart = new google.visualization.LineChart(document.getElementById(this.container_id));
+
+		chart.draw(this.joined_data, options);
+	}
+
+	/* draw minmax table */
+	this.draw_minmax_table = function()
+	{
+		var min_max_table = '<table class="table table-hover table-condensed"><caption>'+ 
+				title +
+				'</caption><thead><tr><th>Board</th><th>Minimum Value (PS_LFS_OS)'+
+				'</th><th>Maximum Value (PS_LFS_OS)</th></tr></thead><tbody>';
+
+		for (var i = 0; i < this.graph_data.length; i++) {
+			if (i % 2)
+				table_class = "success"
+			else
+				table_class = "info"
+
+			min_max_table += '<tr class="'+ table_class +'" style="cursor: pointer;">';
+
+			min_max_table += '<td>' + this.graph_data[i].label + 
+				'</td><td>' + this.graph_data[i].minimum[1] + ' ('
+				+ this.graph_data[i].minimum[0] + ')</td><td>' + this.graph_data[i].maximum[1]
+				+ ' (' + this.graph_data[i].maximum[0] + ')</td></tr>';
+		}
+
+		min_max_table += '</tbody></table>';
+
 		var table_element = document.getElementById(container_id + '-table');
 		table_element.innerHTML = min_max_table;
 	}
 
-	if (graphs.length > 1) {
-		var columns = new Array();
-		columns[0] = 1;
-		joined_data = google.visualization.data.join(data[0], data[1], 'full', [[0, 0]], [1], [1]);
-		for(i = 2; i < graphs.length; i++) {
-			columns[i-1] = i;			
-			joined_data = google.visualization.data.join(joined_data, data[i], 'full', [[0, 0]], columns, [1]);
+	/************************* Constructor starts here *****************************/
+
+	for (var i = 0; i < this.graph_branches.length; i++) {
+		if (this.graph_branches[i] == "master")
+			this.graph_branches[i] = "";
+		else
+			this.graph_branches[i] = this.graph_branches[i] + '-';
+	}
+
+	var new_graphs = [];
+	var new_labels = [];
+	for (var i = 0; i < this.graph_branches.length; i++) {
+		for (var j = 0; j < this.graphs.length; j++) {
+			new_graphs[new_graphs.length] = this.graph_branches[i] + this.graphs[j];
+			if (this.graph_branches[i] != "")
+				new_labels[new_labels.length] = this.line_labels[j] + "(" + this.graph_branches[i].substring(0, this.graph_branches[i].length - 1) + ")";
+			else
+				new_labels[new_labels.length] = this.line_labels[j];
 		}
-	} else {
-		joined_data = data[0];
-	}	
+	}
 
-	var options = {
-		height: 500,
-		title: title,
-		curveType: curve_type,
-		legend: { position: 'none' },
-		explorer : {},
-		hAxis: {
-			title: 'Date'
-			},
-		vAxis: {
-			title: value_axis_title
-		},
-		legend: { position: 'top'},
-		pointSize: 4,
-	};
+	this.graphs = []
+	this.line_labels = []
+	this.graphs = new_graphs.slice();
+	this.line_labels = new_labels.slice();
 
-	var chart = new google.visualization.LineChart(document.getElementById(container_id));
+	for (var i = 0; i < this.graphs.length; i++) {
+		this.processed_graphs[i] = [this.graphs[i], false];
+	}
 
-	chart.draw(joined_data, options);
+	for (var i = 0; i < this.graphs.length; i++) {
+		console.log("Starting to process " + this.graphs[i]);
+		this.read_graph_data_from_file(this.graphs[i]);
+	}
 }
 
-var interval_fn_cntr = 0
+/* Via cookies, we configure defualt options
+ * Cookies which make configruation:
+ * branch - branch on which we work on
+ * tests - which tests to display by default
+ * cpus - for which cpus to display results
+ * maximum_points - number of points to display on graphs
+ */
 
-setInterval(function(){
-	interval_fn_cntr += 1
-	console.log("Refreshing " + interval_fn_cntr)
-	bodyOnLoad()
-}, refresh_period);
+function set_cookie(cookie_name, cookie_value)
+{
+    var d = new Date();
+	var days_expire = 100;
+    d.setTime(d.getTime() + (days_expire * 24 * 60 * 60 * 1000));
+    var expires = "expires="+d.toUTCString();
+    document.cookie = cookie_name + "=" + cookie_value + ";" + expires + ";path=/";
+}
+
+function get_cookie(cookie_name)
+{
+    var name = cookie_name + "=";
+    var ca = document.cookie.split(';');
+    for(var i = 0; i < ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) == ' ') {
+            c = c.substring(1);
+        }
+        if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+        }
+    }
+    return "";
+}
+
+var default_values = "co,t1,t2,ts";
+var default_branches = "master"
+var default_tests = "random_and_compression"
+var maximum_points_default = 9999999
+var decimation_default = 1
+
+var values = ""
+var branches = ""
+var tests = ""
+var maximum_points
+var decimation
+
+function select_values_clicked(id)
+{
+	var value = id.replace("select_", "");
+	var splitted_values = values.split(",");
+	var index = splitted_values.indexOf(value);
+	if(document.getElementById(id).checked == true) {
+		if (index == -1)
+			splitted_values[splitted_values.length] = value;
+	} else {
+		if (index != -1)
+			splitted_values.splice(index, 1);
+	}
+	values = splitted_values.join(",");
+	set_cookie("values", values);
+}
+
+/*!
+ * \fn set_maximum_points(nr_points) 
+ * \brief set how much points will be displayed on graph
+ *
+ *  Sets number of points to be processed by display logic
+ * 
+ *  \param nr_points - number of points
+ */
+function set_max_points(nr_points)
+{
+	maximum_points = nr_points;
+	set_cookie("maximum_points", maximum_points);
+}
+
+/*!
+ * \fn set_decimate(decimate) 
+ * \brief set how much points will be decimated prior display
+ *
+ *  Sets number of points to be decimated by display logic
+ * 
+ *  \param decimate - will cause to keep every decimate point
+ */
+function set_decimate(decimate_set)
+{
+	decimation = decimate_set;
+	set_cookie("decimation", decimation);
+}
+
+
+/* Function populates checkboxes for selecting tests */
+function populate_selected_checkboxes()
+{
+	var splitted_values = values.split(",");
+	for (var i = 0; i < splitted_values.length; i++) {
+		document.getElementById("select_" + splitted_values[i]).checked = true;
+	}
+
+	console.log("Maximum points == " + maximum_points)
+
+	if (maximum_points == 2000) {
+		document.getElementById("sel2000").checked = true;
+	} else if (maximum_points == 400) {
+		document.getElementById("sel400").checked = true;
+	} else if (maximum_points == 100) {
+		document.getElementById("sel100").checked = true;
+	} else if (maximum_points == 20) {
+		document.getElementById("sel20").checked = true;
+	} else if (maximum_points == 9999999) {
+		console.log("Maximum points == " + maximum_points + ", selecintg all")
+		document.getElementById("selall").checked = true;
+	} else {
+		console.log("Error - could not select maximum points!");
+	}
+
+	/* Some check for unspecifed values here would be great */
+	document.getElementById("decimate" + decimation).checked = true;
+}
+
+/* Function configures default options, either from cookies (if exist), or default ones */
+function configure_default_options()
+{
+	var decoded_cookie = decodeURIComponent(document.cookie);
+
+	values = get_cookie("values");
+	if (values == "") {
+		set_cookie("values", default_values);
+		values = default_values;
+	}
+
+	branches = get_cookie("branches");
+	if (branches == "") {
+		branches = default_branches;
+	}
+
+	maximum_points = get_cookie("maximum_points");
+	if (maximum_points == "") {
+		set_cookie("maximum_points", maximum_points_default);
+		maximum_points = maximum_points_default;
+	}
+
+	decimation = get_cookie("decimation");
+	if (decimation == "") {
+		set_cookie("decimation", decimation_default);
+		decimation = decimation_default;
+	}
+
+	populate_selected_checkboxes();
+}
 
 /**
   * Functions executes on body load - main()
   */
 function bodyOnLoad()
 {
-	var temperature_inputs = ["t1", "t2", "ts", "co"];
-	var line_labels = ["T1 (control loop input)", "T2", "Ts (set temperature)", "Co - Control output (Not temperature)"];
-	draw_graphs("temperature", temperature_inputs, line_labels, 'Temperature Sensors', "T [C]", true, 'function');
+	console.log("Body loaded")
 
-	//var control_inputs = [ "co" ];
-	//var line_labels = ["Regulator output"];
-	//draw_graphs("control", control_inputs, line_labels, 'Control', "Control", true, 'none');
+	configure_default_options();
+
+	var graphs_inputs = [];
+	var line_labels = [];
+	var splitted_branches = [];
+	var splitted_branches = branches.split(",");
+
+	if (values.indexOf("t1") != -1) {
+		graphs_inputs[graphs_inputs.length] = "t1";
+		line_labels[line_labels.length] = "T1 (control loop input)";
+	}
+	if (values.indexOf("t2") != -1) {
+		graphs_inputs[graphs_inputs.length] = "t2";
+		line_labels[line_labels.length] = "T2 (free sensor)";
+	}
+	if (values.indexOf("ts") != -1) {
+		graphs_inputs[graphs_inputs.length] = "ts";
+		line_labels[line_labels.length] = "Ts (set temperature)";
+	}
+	if (values.indexOf("co") != -1) {
+		graphs_inputs[graphs_inputs.length] = "co";
+		line_labels[line_labels.length] = "Co - Control output (Not temperature)";
+	}
+	brewmon_graph = new GraphContainer("temperature", graphs_inputs, line_labels, 'Temperature sensors and control', "Temperature T[°C]", true, splitted_branches);
 }
 
 </script>
@@ -286,8 +536,9 @@ function bodyOnLoad()
 
 <body onload=bodyOnLoad() id="body">
 	<!-- Navigation -->
+
 	<div class="container-fluid">
-		<nav class="navbar navbar-fixed-top" role="navigation">
+		<nav class="navbar navbar-fixed-top navbar-light" style="background-color: #e3f2fd;"" role="navigation">
 			<div class="container">
 				<!-- Brand and toggle get grouped for better mobile display -->
 				<div class="navbar-header">
@@ -302,29 +553,54 @@ function bodyOnLoad()
 				<!-- Collect the nav links, forms, and other content for toggling -->
 				<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
 					<ul class="nav navbar-nav">
-					<li>
-					<a href="#TIV">Temperature</a>
-					</li>
-					<li>
-					<a href="./results/">Raw Results</a>
-					</li>
-					<li>
-					<a href="#contact">Contact</a>
-					</li>
 					<li class="dropdown">
 					<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-						<b>Results limit<span class="caret"></span></b></a>
+						<b>Limit<span class="caret"></span></b></a>
 					<ul class="dropdown-menu">
-						<li><a href="javascript:void(0);" onclick="set_maximum_points(2000)">last 2000 </a></li>
-						<li><a href="javascript:void(0);" onclick="set_maximum_points(400)">last 400 </a></li>
-						<li><a href="javascript:void(0);" onclick="set_maximum_points(100)">last 100</a></li>
-						<li><a href="javascript:void(0);" onclick="set_maximum_points(20)">last 20</a></li>
-						<li role="separator" class="divider"></li>
-						<li><a href="javascript:void(0);" onclick="set_maximum_points(9999999)">All (default)</a></li>
-						<li role="separator" class="divider"></li>
-						<li><a href="javascript:void(0);"><span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>When set, click hide/show</a></li>
+					<li><a href="#" class="small" data-value="option1" tabIndex="-1"><input type="radio" name="optpoints" id="sel2000" onclick="set_max_points(2000)"/>&nbsp;Last 2000</a></li>
+					<li><a href="#" class="small" data-value="option1" tabIndex="-1"><input type="radio" name="optpoints" id="sel400" onclick="set_max_points(400)"/>&nbsp;Last 400</a></li>
+					<li><a href="#" class="small" data-value="option1" tabIndex="-1"><input type="radio" name="optpoints" id="sel100" onclick="set_max_points(100)"/>&nbsp;Last 100</a></li>
+					<li><a href="#" class="small" data-value="option1" tabIndex="-1"><input type="radio" name="optpoints" id="sel20" onclick="set_max_points(20)"/>&nbsp;Last 20</a></li>
+					<li role="separator" class="divider"></li>
+					<li><a href="#" class="small" data-value="option1" tabIndex="-1"><input type="radio" name="optpoints" id="selall" onclick="set_max_points(9999999)"/>&nbsp;All (May be slow!)</a></li>
+					<li role="separator" class="divider"></li>
+					<li><a href="javascript:void(0);"><span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span> Refresh to apply</a></li>
 					</ul>
 					</li>
+
+					<li class="dropdown">
+					<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+						<b>Decimation<span class="caret"></span></b></a>
+					<ul class="dropdown-menu">
+					<li><a href="#" class="small" data-value="option1" tabIndex="-1"><input type="radio" name="optpoints_dec" id="decimate1" onclick="set_decimate(1)"/>&nbsp;1</a></li>
+					<li><a href="#" class="small" data-value="option1" tabIndex="-1"><input type="radio" name="optpoints_dec" id="decimate10" onclick="set_decimate(10)"/>&nbsp;10</a></li>
+					<li><a href="#" class="small" data-value="option1" tabIndex="-1"><input type="radio" name="optpoints_dec" id="decimate20" onclick="set_decimate(20)"/>&nbsp;20</a></li>
+					<li><a href="#" class="small" data-value="option1" tabIndex="-1"><input type="radio" name="optpoints_dec" id="decimate50" onclick="set_decimate(50)"/>&nbsp;50</a></li>
+					<li><a href="#" class="small" data-value="option1" tabIndex="-1"><input type="radio" name="optpoints_dec" id="decimate100" onclick="set_decimate(100)"/>&nbsp;100</a></li>
+
+					<li role="separator" class="divider"></li>
+					<li><a href="javascript:void(0);"><span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span> Refresh to apply</a></li>
+					</ul>
+					</li>
+
+					<li class="dropdown">
+						<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+							<b>Display Values<span class="caret"></span></b></a>
+						<ul class="dropdown-menu">
+						<li><a href="#" class="small" data-value="option1" tabIndex="-1">
+							<input type="checkbox" id="select_co" onclick="select_values_clicked('select_co')"/>&nbsp;Co - Control Output</a></li>
+						<li><a href="#" class="small" data-value="option1" tabIndex="-1">
+							<input type="checkbox" id="select_t1" onclick="select_values_clicked('select_t1')"/>&nbsp;T1 - Control Input</a></li>
+						<li><a href="#" class="small" data-value="option1" tabIndex="-1">
+							<input type="checkbox" id="select_t2" onclick="select_values_clicked('select_t2')"/>&nbsp;T2 - Free Input</a></li>
+						<li><a href="#" class="small" data-value="option1" tabIndex="-1">
+							<input type="checkbox" id="select_ts" onclick="select_values_clicked('select_ts')"/>&nbsp;Ts - Set Temperature</a></li>
+						<li><a href="#" class="small" data-value="option1" tabIndex="-1">
+						<li role="separator" class="divider"></li>
+						<li><a href="javascript:void(0);"><span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span> Refresh to apply</a></li>
+						</ul>
+					</li>
+
 					</ul>
 				</div>
 			</div>
@@ -336,8 +612,35 @@ function bodyOnLoad()
 	<div class="container-fluid text-center">
 		<br>
 		<br>
-		<h1>BeerMon <small></small></h1>
+		<h1>BrewMon <small><a id="toggle_about" href="#help_webpage" data-toggle="collapse"><span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span> info</a></small></h1>
 		<hr>
+	</div>
+
+	<!-- Help for the web page  -->
+	<div class="container">		
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="collapse" id="help_webpage">
+					<h3>Usage & Info</h3>
+					<h4>Usage</h4>
+					<hr>
+					<p class="text-blue-big">Use <b>Limit</b> button to select number of points
+					to display results for. Use <b>Decimation</b> menu to select decimation factor
+					of the results (every decimate sample will be kept). Use <b>Display Values</b>
+					to select data to be represented on the graph. All of these options use cookies,
+					therefore will stay active across subsequent visits. For options to take place,
+					set them, and refresh the web page.
+					</p>
+					<br>
+					<h4>Info</h4>
+					<hr>
+					<p class="text-blue-big">INFO
+					</p>
+				</div>
+
+
+			</div>
+		</div>
 	</div>
 
 	<!-- Temperature, this is displayed by default  -->
@@ -382,10 +685,10 @@ function bodyOnLoad()
 	<!-- Footer -->
 	<div class="container">
 		<div class="row" id="contact">
-			<h3>Contact</h3>
+			<h3>About</h3>
 			<hr>
 			<div class="col-lg-12 text-center">
-				<p><i>BeerMon 1.0</i></p>
+				<p><i>BrewMon 2.0</i></p>
 			</div>
 		</div>
 	</div>
