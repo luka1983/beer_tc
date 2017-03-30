@@ -178,6 +178,7 @@ function GraphContainer(container_id,
 			if (items_to_return > 1) {
 				var lines = lines.slice(items_to_return, lines.length);
 			}
+			console.log("Displaying " + lines.length + " points per graph " + graph);
 
 			var index = this.graph_data.length;
 			this.graph_data[index] = new Graph(this.container_id, graph, this.get_line_label(graph));
