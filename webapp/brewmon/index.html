@@ -271,10 +271,11 @@ function GraphContainer(container_id,
                 hchart.addSeries(
                     {
                         yAxis: 1,
-                        type: 'column',
                         name: this.graph_data[i].label,
                         data: this.graph_data[i].graph_data,
                         animation: false,
+                        marker: { radius: 1},
+                        lineWidth: 6,
                     }, false);
             } else {
                 hchart.addSeries(
