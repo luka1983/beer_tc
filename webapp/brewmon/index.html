@@ -20,15 +20,15 @@
 <!-- Custom CSS -->
 <link href="css/site-specific.css" rel="stylesheet">
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
 <!--[if IE]><script type="text/javascript" src="excanvas.js"></script><![endif]-->
 
-<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/boost.js"></script>
+<script src="https://code.highcharts.com/modules/data.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
 
 <script>
-
-google.charts.load('current', {packages: ['corechart', 'line']});
 
 /**
   * Functon parses date in form 2012-03-12 12:34:34 format
@@ -110,9 +110,6 @@ function GraphContainer(container_id,
 	/* Graph data - array of Graph objects */
 	this.graph_data = [];
 
-	/* Joined all graphs data */
-	this.joined_data = new google.visualization.DataTable();
-
 	/*********************** Methods *****************************/
 
 	/* Read graph data from file */
@@ -173,6 +170,7 @@ function GraphContainer(container_id,
 	/* Populate graph data */
 	this.populate_graph_data = function(graph, text)
 	{
+			var skipped_lines = 0;
 			var lines = text.split("\n");
 			var items_to_return = lines.length - maximum_points;
 			if (items_to_return > 1) {
@@ -182,10 +180,6 @@ function GraphContainer(container_id,
 
 			var index = this.graph_data.length;
 			this.graph_data[index] = new Graph(this.container_id, graph, this.get_line_label(graph));
-			this.graph_data[index].graph_data = new google.visualization.DataTable();
-
-			this.graph_data[index].graph_data.addColumn('date', 'Date');
-			this.graph_data[index].graph_data.addColumn('number', this.get_line_label(graph));
 
 			for (i = 0; i < lines.length; i++) {
 				if (i % decimation != 0)
@@ -197,7 +191,13 @@ function GraphContainer(container_id,
 					continue
 				}
 				ts = parse_date(date);
-				this.graph_data[index].graph_data.addRow([ts, Number(val[1])]);
+				if (typeof this.graph_data[index].graph_data[this.graph_data[index].graph_data.length -1] !== 'undefined') {
+					if (ts < this.graph_data[index].graph_data[this.graph_data[index].graph_data.length -1][0]) {
+						skipped_lines++;
+						continue
+					}
+				}
+				this.graph_data[index].graph_data.push([ts, Number(val[1])]);
 
 				if (this.graph_data[index].minimum == null) {
 					this.graph_data[index].minimum = [];
@@ -216,74 +216,85 @@ function GraphContainer(container_id,
 					}
 				}
 			}
-
 			this.mark_graph_processed(graph)
+			this.total_points = this.total_points + this.graph_data[index].graph_data.length;
 
 			if (this.check_all_finished()) {
-				console.log("All graphs are loaded for " + container_id)
+				console.log("All graphs are loaded for " + container_id + ", skipped points " + skipped_lines)
 				this.draw_graphs();
 				if (this.draw_table == true)
 					this.draw_minmax_table();
 			}
 	}
 
-	/* Unify and draw data */
-	this.draw_graphs = function()
-	{
-		if (this.graphs.length > 1) {
-			var columns = new Array();
-			columns[0] = 1;
-			this.joined_data = google.visualization.data.join(this.graph_data[0].graph_data, this.graph_data[1].graph_data, 'full', [[0, 0]], [1], [1]);
-			for(var i = 2; i < this.graphs.length; i++) {
-				columns[i-1] = i;			
-				this.joined_data = google.visualization.data.join(this.joined_data, this.graph_data[i].graph_data, 'full', [[0, 0]], columns, [1]);
-			}
-		} else {
-			this.joined_data = this.graph_data[0].graph_data;
-		}	
+    this.draw_graphs = function()
+    {
+        options = {
+            chart: {
+                renderTo: this.container_id,
+                zoomType: 'x',
+                panning: true,
+                panKey: 'shift'
+            },
+            title: {
+                text: this.title,
+            },
+            plotOptions: {
+                series: {
+                    label: {
+                        connectorAllowed: false,
+                    },
+                }
+            },
+            xAxis: {
+                type: 'datetime',
+            },
+            yAxis: [{
+                title: {text: this.value_axis_title},
+            }, {
 
-		var branches_string = ""
-		for (var i = 0; i < this.graph_branches.length; i++) {
-			if (this.graph_branches[i] == "")
-				if (branches_string == "")
-					branches_string += "master";
-				else
-					branches_string += ", master";
-			else
-				if (branches_string != "")
-					branches_string += ", " + this.graph_branches[i].substring(0, this.graph_branches[i].length - 1)
-				else
-					branches_string += this.graph_branches[i].substring(0, this.graph_branches[i].length - 1)
-		}
+                title: {
+                    text: 'Cooling on/off',
+                },
+                opposite: true
+            }
+            ],
+            boost: {
+                useGPUTranslations: true
+            },
+        };
 
-		graph_title = this.title + " (" + branches_string + ")";
+        hchart = new Highcharts.Chart(options);
 
-		var options = {
-			height: 500,
-			title: graph_title,
-			curveType: 'function',
-			legend: { position: 'top' },
-			explorer : {},
-			hAxis: {
-				title: 'Datum'
-				},
-			vAxis: {
-				title: this.value_axis_title
-			},
-			pointSize: 4,
-		};
-		
-		var chart = new google.visualization.LineChart(document.getElementById(this.container_id));
-
-		chart.draw(this.joined_data, options);
-	}
+        for (var i = 0; i < this.graphs.length; i++) {
+            if (this.graph_data[i].label.startsWith('Co')) {
+                hchart.addSeries(
+                    {
+                        yAxis: 1,
+                        type: 'column',
+                        name: this.graph_data[i].label,
+                        data: this.graph_data[i].graph_data,
+                        animation: false,
+                    }, false);
+            } else {
+                hchart.addSeries(
+                    {
+                        name: this.graph_data[i].label,
+                        data: this.graph_data[i].graph_data,
+                        animation: false,
+                        marker: { radius: 1},
+                    }, false);
+            }
+        }
+        hchart.redraw();
+    }
 
 	/* draw minmax table */
 	this.draw_minmax_table = function()
 	{
 		var min_max_table = '<table class="table table-hover table-condensed"><caption>'+ 
 				title +
-				'</caption><thead><tr><th>Board</th><th>Minimum Value (Date)'+
+				'</caption><thead><tr><th>Input</th><th>Minimum Value (Date)'+
 				'</th><th>Maximum Value (Date)</th></tr></thead><tbody>';
 
 		for (var i = 0; i < this.graph_data.length; i++) {
@@ -294,10 +305,14 @@ function GraphContainer(container_id,
 
 			min_max_table += '<tr class="'+ table_class +'" style="cursor: pointer;">';
 
+
 			min_max_table += '<td>' + this.graph_data[i].label + 
 				'</td><td>' + this.graph_data[i].minimum[1] + ' ('
-				+ this.graph_data[i].minimum[0] + ')</td><td>' + this.graph_data[i].maximum[1]
-				+ ' (' + this.graph_data[i].maximum[0] + ')</td></tr>';
+				//+ this.graph_data[i].minimum[0].format("dd mmm yyyy hh:MMtt") +
+				+ this.graph_data[i].minimum[0].toLocaleString() +
+				')</td><td>' + this.graph_data[i].maximum[1] + ' ('
+				+ this.graph_data[i].maximum[0].toLocaleString()
+				+ ')</td></tr>';
 		}
 
 		min_max_table += '</tbody></table>';
@@ -514,7 +529,7 @@ function bodyOnLoad()
 	}
 	if (values.indexOf("co") != -1) {
 		graphs_inputs[graphs_inputs.length] = "co";
-		line_labels[line_labels.length] = "Co - Control output (Not temperature)";
+		line_labels[line_labels.length] = "Co - Control output";
 	}
 	brewmon_graph = new GraphContainer("temperature", graphs_inputs, line_labels, 'Temperature sensors and control', "Temperature T[°C]", true, splitted_branches);
 }
@@ -677,7 +692,7 @@ function bodyOnLoad()
 			<h3>About</h3>
 			<hr>
 			<div class="col-lg-12 text-center">
-				<p><i>BrewMon 2.0</i></p>
+				<p><i>BrewMon 3.0</i></p>
 			</div>
 		</div>
 	</div>
