@@ -51,7 +51,7 @@ function parse_date(datestring)
     minute = explode_time[1];
     second = explode_time[2];
 
-    return new Date(year, month-1, day, hour, minute, second);
+    return new Date(year, month-1, day, hour, minute, second).getTime();
 }
 
 /* Graph object - representation of single graph data set
