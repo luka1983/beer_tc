@@ -51,11 +51,11 @@ void lcd_update_tc(void)
 
 void lcd_update_ts(void)
 {
-	int ts = get_ts();
+	uint32_t ts = get_ts();
 	double temp_double = 0;
 	char string_temperature[12];
 	temp_double = (double)ts/(double)DEC_DIV;
-	dtostrf(temp_double, 2, 4, string_temperature);
+	dtostrf(temp_double, 3, 4, string_temperature);
 	lcd_gotoxy(0,1);
 	lcd_puts("Ts: ");
 	lcd_puts(string_temperature);
