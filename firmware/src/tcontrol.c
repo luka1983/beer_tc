@@ -1,12 +1,19 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <avr/eeprom.h>
 #include "serial.h"
 #include "tcontrol.h"
 #include "commands.h"
 
+uint32_t EEMEM ts_eeprom;
+uint32_t EEMEM _ts_eeprom;
+
 static struct TempController tc = {
 	.ct = 1000,
-	.ts = 21 * DEC_DIV,
+	// Although ts is set below, set default
+	// value to something sensible, just in
+	// case that init function is not ran
+	.ts = 16 * DEC_DIV,
 	.hl = 5 * DEC_DIV / 10,
 	.hu = 5 * DEC_DIV / 10,
 	.t1 = NULL,
@@ -38,6 +45,13 @@ int32_t get_ts() {
 }
 
 uint8_t set_ts(int32_t ts) {
+	uint32_t eeprom_val, _eeprom_val;
+	if (ts == tc.ts)
+		return 0;
+	eeprom_val = ts;
+	_eeprom_val = ~ts;
+	eeprom_update_dword(&ts_eeprom, eeprom_val);
+	eeprom_update_dword(&_ts_eeprom, _eeprom_val);
 	tc.ts = ts;
 	return 0;
 }
@@ -54,8 +68,27 @@ int32_t get_co() {
 	return pin_state(tc.out) == On ? 1 : 0;
 }
 
+void init_ts_from_eeprom(void)
+{
+	uint32_t eeprom_val, _eeprom_val;
+
+	eeprom_val = eeprom_read_dword(&ts_eeprom);
+	_eeprom_val = eeprom_read_dword(&_ts_eeprom);
+
+	// Protection against non-inited eeprom
+	// Value, along with mirrored value is stored
+	// If those do not match, set default value
+	if (eeprom_val == ~_eeprom_val)
+		tc.ts = eeprom_val;
+	else
+		tc.ts = 17 * DEC_DIV;
+}
+
 void init_control_loop(uint32_t ct) {
 	tc.ct = ct;
+
+	// Initialize ts from eeprom
+	init_ts_from_eeprom();
 
 	// controller digital output init
 	pin_init(tc.out);
