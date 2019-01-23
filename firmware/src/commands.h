@@ -12,7 +12,8 @@ typedef enum {
 	GetT1,
 	GetT2,
 	GetId,
-	GetCo
+	GetCo,
+	GetVersion
 } Cname;
 
 void set_command_handler(Cname cname, void* fp);

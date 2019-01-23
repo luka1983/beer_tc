@@ -7,6 +7,7 @@
 #include "serial.h"
 #include "commands.h"
 #include "lcd.h"
+#include "version.h"
 
 /* Comment out to leave 18b20 demo code out */
 //#define DS18B20_DEMO
@@ -22,6 +23,11 @@
 
 void get_id(char* id) {
 	strcpy(id, BOARD_ID);
+	return;
+}
+
+void get_version(char* version) {
+	strcpy(version, FIRMWARE_VERSION);
 	return;
 }
 
@@ -62,6 +68,7 @@ int main(void) {
 	init_serial(19200, 8, 0, 1);
 
 	set_command_handler(GetId, &get_id);
+	set_command_handler(GetVersion, &get_version);
 
 	lcd_init(LCD_DISP_ON);
 	lcd_clrscr();
