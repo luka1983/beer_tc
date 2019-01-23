@@ -51,7 +51,6 @@ void lcd_update_tc(void)
 
 void lcd_update_ts(void)
 {
-	int err = 0;
 	int ts = get_ts();
 	double temp_double = 0;
 	char string_temperature[12];
