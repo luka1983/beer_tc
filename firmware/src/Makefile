@@ -3,18 +3,19 @@ FCPU		= 16000000UL
 
 PRG			= beer_tc
 
-OBJS		= beer_tc.o tcontrol.o serial.o onewire.o ds18b20.o temperature.o commands.o gpio.o
+OBJS		= beer_tc.o tcontrol.o serial.o onewire.o ds18b20.o temperature.o commands.o gpio.o lcd.o
 
 MCU_TARGET	= atmega328p
 
 OPTIMIZE	= -O2
 DEFS		= -DF_CPU=$(FCPU)
+MY_FLAGS        = -D_LCD_DEFINITIONS_FILE
 
 # You should not have to change anything below here.
 CC			= avr-gcc
 
 # Override is only needed by avr-lib build system.
-override CFLAGS		= -g -Wall $(OPTIMIZE) -mmcu=$(MCU_TARGET) $(DEFS)
+override CFLAGS		= -g -Wall $(OPTIMIZE) -mmcu=$(MCU_TARGET) $(DEFS) $(MY_FLAGS)
 override LDFLAGS	= -lm -Wl,-Map,$(PRG).map
 
 OBJCOPY		= avr-objcopy
@@ -47,6 +48,9 @@ commands.o: commands.c
 
 gpio.o: gpio.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -c gpio.c
+
+lcd.o: lcd.c
+	$(CC) $(CFLAGS) $(LDFLAGS) -c lcd.c
 
 clean:
 	rm -rf *.o $(PRG).elf $(PRG).hex *.bak
