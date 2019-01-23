@@ -101,10 +101,15 @@ int16_t temperature_get_nr_channels(void);
  * Parameters:
  *
  * tc [IN]    - temperature channel config
- * async [IN] - async temperature read, if used the the async read
- *              is performed. This means that reading will lag for
- *              one read period since the read itself triggers new
- *              read but does not wait for its completion.
+ * async [IN] - async temperature read. If used then the async read
+ *              is performed. In terms of ds18b20, this means that
+ *              last value in sensor is taken. Temperature read works
+ *              in a way that read towards sensor is initiated, then
+ *              up to 750ms can pass until the result is ready. In case
+ *              of async read, command to sensor will be initiated, but
+ *              its completion will not be waited for, but data which
+ *              was last ready will be read which in the end means
+ *              temperature from last read is fetched.
  *
  * Returns:
  * Function returns 0/TEMPERATURE_OK in case all went fine, or
