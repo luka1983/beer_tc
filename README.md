@@ -159,3 +159,7 @@ While _get_ command is supported for all listed objects, only some can be update
 | un     | string    | rw  | unit system in use, i for imperial, m for metric | n/a    |
 | fw     | string    | ro  | firmware version                                 | n/a    |
 | id     | string    | ro  | board id                                         | a      |
+
+## Working with LCD
+
+LCD connection is described in hw/lcd/lcd-to-atmega.pdf. As a sample project one can use beer_tc with LCD_DEMO defined in beer_tc.c
