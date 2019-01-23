@@ -1,14 +1,19 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <string.h>
+#include <util/delay.h>
 #include "tcontrol.h"
 #include "serial.h"
 #include "commands.h"
+#include "lcd.h"
 
 /* Comment out to leave 18b20 demo code out */
 //#define DS18B20_DEMO
 
-#ifdef DS18B20_DEMO
+/* Define for lcd_demo */
+//#define LCD_DEMO
+
+#if defined(DS18B20_DEMO) || defined(LCD_DEMO)
 #include "demo.h"
 #endif
 
@@ -31,6 +36,9 @@ int main(void) {
 	for(;;) {
 #ifdef DS18B20_DEMO
 		temperature_demo();
+#endif
+#ifdef LCD_DEMO
+		lcd_demo();
 #endif
 	}
 
